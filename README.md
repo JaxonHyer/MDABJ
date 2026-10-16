@@ -1,2 +1,2 @@
-# MDEBJ
-or the **M**odified **D**iplomacy **E**ngine **B**y **J**axon
+# MDABJ
+or the **M**odified **D**iplomacy **A**djudicator **B**y **J**axon
