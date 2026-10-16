@@ -1,0 +1,889 @@
+{
+  "territories": {
+    "athens": {
+      "id": "athens",
+      "name": "Athens",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "athens",
+      "isTradeNode": false,
+      "adjacent": ["corinth", "thessaly", "aegean_sea", "corinthian_sea"]
+    },
+    "sparta": {
+      "id": "sparta",
+      "name": "Sparta",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "sparta",
+      "isTradeNode": false,
+      "adjacent": ["corinth", "epirus", "corinthian_sea", "messenian_sea"]
+    },
+    "corinth": {
+      "id": "corinth",
+      "name": "Corinth",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "sparta",
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["athens", "sparta", "epirus", "aegean_sea", "corinthian_sea"],
+      "tradeRoutes": ["piraeus", "byzantium"]
+    },
+    "piraeus": {
+      "id": "piraeus",
+      "name": "Piraeus",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "athens",
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["athens", "aegean_sea", "corinthian_sea"],
+      "tradeRoutes": ["corinth", "rhodes"]
+    },
+    "macedon": {
+      "id": "macedon",
+      "name": "Macedon",
+      "type": "land",
+      "isSupplyCenter": true,
+      "homePower": "macedon",
+      "isTradeNode": false,
+      "adjacent": ["thessaly", "thrace", "epirus", "dalmatia"]
+    },
+    "thessaly": {
+      "id": "thessaly",
+      "name": "Thessaly",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "macedon",
+      "isTradeNode": false,
+      "adjacent": ["macedon", "athens", "epirus", "delphi", "aegean_sea"]
+    },
+    "thrace": {
+      "id": "thrace",
+      "name": "Thrace",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "macedon",
+      "isTradeNode": false,
+      "adjacent": ["macedon", "byzantium", "dacia", "aegean_sea", "pontus_euxinus"]
+    },
+    "epirus": {
+      "id": "epirus",
+      "name": "Epirus",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["macedon", "thessaly", "corinth", "sparta", "delphi", "ionian_sea", "aegean_sea"]
+    },
+    "delphi": {
+      "id": "delphi",
+      "name": "Delphi",
+      "type": "land",
+      "isSupplyCenter": true,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["thessaly", "epirus", "athens"]
+    },
+    "byzantium": {
+      "id": "byzantium",
+      "name": "Byzantium",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": null,
+      "isTradeNode": true,
+      "tradeNodeValue": 2,
+      "adjacent": ["thrace", "bithynia", "dacia", "aegean_sea", "pontus_euxinus"],
+      "tradeRoutes": ["corinth", "media"]
+    },
+    "bithynia": {
+      "id": "bithynia",
+      "name": "Bithynia",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "satrapies",
+      "isTradeNode": false,
+      "adjacent": ["byzantium", "galatia", "sinope", "pontus_euxinus", "aegean_sea"]
+    },
+    "galatia": {
+      "id": "galatia",
+      "name": "Galatia",
+      "type": "land",
+      "isSupplyCenter": true,
+      "homePower": "satrapies",
+      "isTradeNode": false,
+      "adjacent": ["bithynia", "miletus", "cappadocia", "isauria"]
+    },
+    "miletus": {
+      "id": "miletus",
+      "name": "Miletus",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "satrapies",
+      "isTradeNode": false,
+      "adjacent": ["galatia", "isauria", "aegean_sea"]
+    },
+    "sinope": {
+      "id": "sinope",
+      "name": "Sinope",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["bithynia", "cappadocia", "armenia", "pontus_euxinus"]
+    },
+    "cappadocia": {
+      "id": "cappadocia",
+      "name": "Cappadocia",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["galatia", "sinope", "isauria", "antioch", "armenia", "media"]
+    },
+    "isauria": {
+      "id": "isauria",
+      "name": "Isauria",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["galatia", "miletus", "cappadocia", "antioch", "cilician_strait"]
+    },
+    "antioch": {
+      "id": "antioch",
+      "name": "Antioch",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["cappadocia", "isauria", "sidon", "damascus", "cilician_strait", "phoenecian_sea"]
+    },
+    "media": {
+      "id": "media",
+      "name": "Media",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["cappadocia", "armenia"],
+      "tradeRoutes": ["byzantium"]
+    },
+    "armenia": {
+      "id": "armenia",
+      "name": "Armenia",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["cappadocia", "sinope", "media"]
+    },
+    "damascus": {
+      "id": "damascus",
+      "name": "Damascus",
+      "type": "land",
+      "isSupplyCenter": true,
+      "homePower": "persia",
+      "isTradeNode": false,
+      "adjacent": ["antioch", "sidon", "jerusalem", "petra", "nabatea"]
+    },
+    "petra": {
+      "id": "petra",
+      "name": "Petra",
+      "type": "land",
+      "isSupplyCenter": true,
+      "homePower": "persia",
+      "isTradeNode": false,
+      "adjacent": ["damascus", "gaza", "nabatea", "idumea"]
+    },
+    "alexandria": {
+      "id": "alexandria",
+      "name": "Alexandria",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "persia",
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["memphis", "sinai", "egyptian_sea", "libyan_sea"],
+      "tradeRoutes": ["naucratis", "sicilia"]
+    },
+    "naucratis": {
+      "id": "naucratis",
+      "name": "Naucratis",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["alexandria", "memphis", "egyptian_sea"],
+      "tradeRoutes": ["alexandria", "jerusalem"]
+    },
+    "sidon": {
+      "id": "sidon",
+      "name": "Sidon",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "phoenicia",
+      "isTradeNode": false,
+      "adjacent": ["damascus", "tyre", "antioch", "phoenecian_sea"]
+    },
+    "tyre": {
+      "id": "tyre",
+      "name": "Tyre",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "phoenicia",
+      "isTradeNode": false,
+      "adjacent": ["sidon", "gaza", "phoenecian_sea"]
+    },
+    "cyprus": {
+      "id": "cyprus",
+      "name": "Cyprus",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "phoenicia",
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["cilician_strait", "phoenecian_sea", "egyptian_sea"],
+      "tradeRoutes": ["jerusalem"]
+    },
+    "jerusalem": {
+      "id": "jerusalem",
+      "name": "Jerusalem",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": true,
+      "tradeNodeValue": 2,
+      "adjacent": ["damascus", "gaza", "petra", "phoenecian_sea", "gulf_of_pelusium"],
+      "tradeRoutes": ["cyprus", "naucratis", "sicilia"]
+    },
+    "gaza": {
+      "id": "gaza",
+      "name": "Gaza",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["tyre", "jerusalem", "petra", "idumea", "phoenecian_sea", "gulf_of_pelusium"]
+    },
+    "carthage": {
+      "id": "carthage",
+      "name": "Carthage",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "carthage",
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["thopsis", "numidia", "mare_carthago"],
+      "tradeRoutes": ["sicilia"]
+    },
+    "thopsis": {
+      "id": "thopsis",
+      "name": "Thopsis",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "carthage",
+      "isTradeNode": false,
+      "adjacent": ["carthage", "maraka", "gulf_of_tacape", "mare_carthago"]
+    },
+    "maraka": {
+      "id": "maraka",
+      "name": "Maraka",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "carthage",
+      "isTradeNode": false,
+      "adjacent": ["thopsis", "cirta", "gulf_of_tacape", "mare_carthago"]
+    },
+    "rome": {
+      "id": "rome",
+      "name": "Rome",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "rome",
+      "isTradeNode": false,
+      "adjacent": ["ravenna", "neapolis", "etruria", "tyrrhenian_sea"]
+    },
+    "ravenna": {
+      "id": "ravenna",
+      "name": "Ravenna",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "rome",
+      "isTradeNode": false,
+      "adjacent": ["rome", "venezia", "apulia", "etruria", "mare_adriatica", "tyrrhenian_sea"]
+    },
+    "sicilia": {
+      "id": "sicilia",
+      "name": "Sicilia",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": true,
+      "tradeNodeValue": 1,
+      "adjacent": ["tyrrhenian_sea", "ionian_sea", "ausonian_sea"],
+      "tradeRoutes": ["carthage", "alexandria", "jerusalem"]
+    },
+    "rhodes": {
+      "id": "rhodes",
+      "name": "Rhodes",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "athens",
+      "isTradeNode": false,
+      "adjacent": ["aegean_sea", "minoan_sea", "cilician_strait"],
+      "tradeRoutes": ["piraeus"]
+    },
+    "crete": {
+      "id": "crete",
+      "name": "Crete",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "athens",
+      "isTradeNode": false,
+      "adjacent": ["aegean_sea", "minoan_sea", "libyan_sea", "messenian_sea"]
+    },
+    "neapolis": {
+      "id": "neapolis",
+      "name": "Neapolis",
+      "type": "coastal",
+      "isSupplyCenter": true,
+      "homePower": "rome",
+      "isTradeNode": false,
+      "adjacent": ["rome", "apulia", "tyrrhenian_sea", "ausonian_sea"]
+    },
+    "dalmatia": {
+      "id": "dalmatia",
+      "name": "Dalmatia",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["macedon", "venezia", "pannonia", "mare_adriatica", "ionian_sea"]
+    },
+    "dacia": {
+      "id": "dacia",
+      "name": "Dacia",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["thrace", "pannonia", "sarmatia"]
+    },
+    "pannonia": {
+      "id": "pannonia",
+      "name": "Pannonia",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["dalmatia", "venezia", "noricum", "dacia", "sarmatia", "ungaria"]
+    },
+    "sarmatia": {
+      "id": "sarmatia",
+      "name": "Sarmatia",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["dacia", "pannonia", "crimea", "chersonesus"]
+    },
+    "crimea": {
+      "id": "crimea",
+      "name": "Crimea",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["sarmatia", "pontus_euxinus"]
+    },
+    "chersonesus": {
+      "id": "chersonesus",
+      "name": "Chersonesus",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["sarmatia", "pontus_euxinus"]
+    },
+    "memphis": {
+      "id": "memphis",
+      "name": "Memphis",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["alexandria", "naucratis", "upper_egypt", "sinai"]
+    },
+    "upper_egypt": {
+      "id": "upper_egypt",
+      "name": "Upper Egypt",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["memphis", "sinai"]
+    },
+    "sinai": {
+      "id": "sinai",
+      "name": "Sinai",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["alexandria", "memphis", "upper_egypt", "idumea", "egyptian_sea", "gulf_of_pelusium", "reed_sea"]
+    },
+    "idumea": {
+      "id": "idumea",
+      "name": "Idumea",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["gaza", "petra", "nabatea", "sinai", "gulf_of_pelusium", "reed_sea"]
+    },
+    "nabatea": {
+      "id": "nabatea",
+      "name": "Nabatea",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["damascus", "petra", "idumea"]
+    },
+    "numidia": {
+      "id": "numidia",
+      "name": "Numidia",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["carthage", "cirta", "phazania", "mare_carthago", "berber_sea"]
+    },
+    "cirta": {
+      "id": "cirta",
+      "name": "Cirta",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["maraka", "numidia", "phazania", "mare_carthago"]
+    },
+    "phazania": {
+      "id": "phazania",
+      "name": "Phazania",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["numidia", "cirta", "garamantes", "leptis", "gulf_of_syrtis"]
+    },
+    "garamantes": {
+      "id": "garamantes",
+      "name": "Garamantes",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["phazania", "leptis", "west_sahara", "east_sahara"]
+    },
+    "leptis": {
+      "id": "leptis",
+      "name": "Leptis",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["phazania", "garamantes", "cyrenaica", "gulf_of_syrtis"]
+    },
+    "cyrenaica": {
+      "id": "cyrenaica",
+      "name": "Cyrenaica",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["leptis", "ammon", "marmarica", "gulf_of_syrtis", "libyan_sea"]
+    },
+    "ammon": {
+      "id": "ammon",
+      "name": "Ammon",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["cyrenaica", "marmarica", "east_sahara"]
+    },
+    "marmarica": {
+      "id": "marmarica",
+      "name": "Marmarica",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["cyrenaica", "ammon", "alexandria", "libyan_sea"]
+    },
+    "etruria": {
+      "id": "etruria",
+      "name": "Etruria",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["rome", "ravenna", "venezia", "ligurian_sea", "tyrrhenian_sea"]
+    },
+    "venezia": {
+      "id": "venezia",
+      "name": "Venezia",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["ravenna", "etruria", "dalmatia", "noricum", "ligurian_sea", "mare_adriatica"]
+    },
+    "apulia": {
+      "id": "apulia",
+      "name": "Apulia",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["ravenna", "neapolis", "mare_adriatica", "ionian_sea", "ausonian_sea"]
+    },
+    "noricum": {
+      "id": "noricum",
+      "name": "Noricum",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["venezia", "pannonia", "rhetia", "germania"]
+    },
+    "rhetia": {
+      "id": "rhetia",
+      "name": "Rhetia",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["noricum", "germania", "gaul", "ligurian_sea"]
+    },
+    "germania": {
+      "id": "germania",
+      "name": "Germania",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["noricum", "rhetia", "gaul", "ungaria"]
+    },
+    "ungaria": {
+      "id": "ungaria",
+      "name": "Ungaria",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["pannonia", "germania", "sarmatia"]
+    },
+    "gaul": {
+      "id": "gaul",
+      "name": "Gaul",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["rhetia", "germania", "tarraconensis", "ligurian_sea", "mare_iberia"]
+    },
+    "tarraconensis": {
+      "id": "tarraconensis",
+      "name": "Tarraconensis",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["gaul", "saguntum", "ligurian_sea", "mare_iberia"]
+    },
+    "saguntum": {
+      "id": "saguntum",
+      "name": "Saguntum",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["tarraconensis", "baleares", "mare_iberia", "mare_herakleia"]
+    },
+    "baleares": {
+      "id": "baleares",
+      "name": "Baleares",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["saguntum", "mare_iberia", "mare_herakleia"]
+    },
+    "corsica": {
+      "id": "corsica",
+      "name": "Corsica",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["ligurian_sea", "tyrrhenian_sea"]
+    },
+    "sardinia": {
+      "id": "sardinia",
+      "name": "Sardinia",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["ligurian_sea", "tyrrhenian_sea", "mare_carthago"]
+    },
+    "mauretania": {
+      "id": "mauretania",
+      "name": "Mauretania",
+      "type": "coastal",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["west_sahara", "mare_herakleia", "berber_sea"]
+    },
+    "west_sahara": {
+      "id": "west_sahara",
+      "name": "West Sahara",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["mauretania", "garamantes", "east_sahara"]
+    },
+    "east_sahara": {
+      "id": "east_sahara",
+      "name": "East Sahara",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["west_sahara", "garamantes", "ammon", "bayuda"]
+    },
+    "bayuda": {
+      "id": "bayuda",
+      "name": "Bayuda",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["east_sahara", "africa_sarpentiensis"]
+    },
+    "africa_sarpentiensis": {
+      "id": "africa_sarpentiensis",
+      "name": "Africa Sarpentiensis",
+      "type": "land",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["bayuda"]
+    },
+    "aegean_sea": {
+      "id": "aegean_sea",
+      "name": "Aegean Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["athens", "corinth", "thessaly", "epirus", "thrace", "byzantium", "bithynia", "miletus", "rhodes", "crete", "minoan_sea", "pontus_euxinus", "corinthian_sea", "messenian_sea"]
+    },
+    "ionian_sea": {
+      "id": "ionian_sea",
+      "name": "Ionian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["epirus", "dalmatia", "apulia", "sicilia", "messenian_sea", "ausonian_sea", "mare_adriatica"]
+    },
+    "corinthian_sea": {
+      "id": "corinthian_sea",
+      "name": "Corinthian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["athens", "corinth", "sparta", "piraeus", "aegean_sea", "messenian_sea"]
+    },
+    "messenian_sea": {
+      "id": "messenian_sea",
+      "name": "Messenian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["sparta", "crete", "corinthian_sea", "aegean_sea", "ionian_sea", "libyan_sea", "minoan_sea"]
+    },
+    "minoan_sea": {
+      "id": "minoan_sea",
+      "name": "Minoan Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["rhodes", "crete", "aegean_sea", "messenian_sea", "cilician_strait", "egyptian_sea"]
+    },
+    "libyan_sea": {
+      "id": "libyan_sea",
+      "name": "Libyan Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["crete", "marmarica", "alexandria", "messenian_sea", "egyptian_sea", "gulf_of_syrtis"]
+    },
+    "egyptian_sea": {
+      "id": "egyptian_sea",
+      "name": "Egyptian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["alexandria", "naucratis", "sinai", "cyprus", "libyan_sea", "minoan_sea", "phoenecian_sea", "gulf_of_pelusium"]
+    },
+    "phoenecian_sea": {
+      "id": "phoenecian_sea",
+      "name": "Phoenecian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["sidon", "tyre", "gaza", "jerusalem", "antioch", "cyprus", "egyptian_sea", "cilician_strait", "gulf_of_pelusium"]
+    },
+    "cilician_strait": {
+      "id": "cilician_strait",
+      "name": "Cilician Strait",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["rhodes", "isauria", "antioch", "cyprus", "minoan_sea", "phoenecian_sea"]
+    },
+    "pontus_euxinus": {
+      "id": "pontus_euxinus",
+      "name": "Pontus Euxinus",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["thrace", "byzantium", "bithynia", "sinope", "crimea", "chersonesus", "aegean_sea"]
+    },
+    "gulf_of_pelusium": {
+      "id": "gulf_of_pelusium",
+      "name": "Gulf of Pelusium",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["jerusalem", "gaza", "idumea", "sinai", "egyptian_sea", "phoenecian_sea"]
+    },
+    "reed_sea": {
+      "id": "reed_sea",
+      "name": "Reed Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["sinai", "idumea"]
+    },
+    "tyrrhenian_sea": {
+      "id": "tyrrhenian_sea",
+      "name": "Tyrrhenian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["rome", "ravenna", "neapolis", "etruria", "corsica", "sardinia", "sicilia", "ligurian_sea", "ausonian_sea"]
+    },
+    "ausonian_sea": {
+      "id": "ausonian_sea",
+      "name": "Ausonian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["neapolis", "apulia", "sicilia", "tyrrhenian_sea", "ionian_sea"]
+    },
+    "mare_adriatica": {
+      "id": "mare_adriatica",
+      "name": "Mare Adriatica",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["ravenna", "venezia", "dalmatia", "apulia", "ionian_sea"]
+    },
+    "ligurian_sea": {
+      "id": "ligurian_sea",
+      "name": "Ligurian Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["etruria", "venezia", "rhetia", "gaul", "tarraconensis", "corsica", "sardinia", "tyrrhenian_sea", "mare_iberia"]
+    },
+    "mare_iberia": {
+      "id": "mare_iberia",
+      "name": "Mare Iberia",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["gaul", "tarraconensis", "saguntum", "baleares", "ligurian_sea", "mare_herakleia"]
+    },
+    "mare_herakleia": {
+      "id": "mare_herakleia",
+      "name": "Mare Herakleia",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["saguntum", "baleares", "mauretania", "mare_iberia", "berber_sea"]
+    },
+    "mare_carthago": {
+      "id": "mare_carthago",
+      "name": "Mare Carthago",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["carthage", "thopsis", "maraka", "cirta", "numidia", "sardinia", "berber_sea", "gulf_of_tacape"]
+    },
+    "berber_sea": {
+      "id": "berber_sea",
+      "name": "Berber Sea",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["numidia", "mauretania", "mare_carthago", "mare_herakleia"]
+    },
+    "gulf_of_tacape": {
+      "id": "gulf_of_tacape",
+      "name": "Gulf of Tacape",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["thopsis", "maraka", "mare_carthago", "gulf_of_syrtis"]
+    },
+    "gulf_of_syrtis": {
+      "id": "gulf_of_syrtis",
+      "name": "Gulf of Syrtis",
+      "type": "sea",
+      "isSupplyCenter": false,
+      "homePower": null,
+      "isTradeNode": false,
+      "adjacent": ["leptis", "cyrenaica", "phazania", "gulf_of_tacape", "libyan_sea"]
+    }
+  }
+}
