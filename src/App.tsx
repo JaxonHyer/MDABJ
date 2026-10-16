@@ -2,31 +2,30 @@ import { useState } from 'react';
 import './App.css';
 import { GameState, Power, PowerId } from './types/game';
 import { createInitialState } from './engine/gameState';
-import { adjudicate } from './engine/adjudicator';
-import { loadPowers, loadTerritories } from './data/gameData';
 import { MapDisplay } from './components/MapDisplay';
 import { OrderPanel } from './components/OrderPanel';
 import { ResultsPanel } from './components/ResultsPanel';
 import { PowerSelector } from './components/PowerSelector';
 
-const POWERS: Power[] = loadPowers();
+// Placeholder powers - will be populated from map data
+const POWERS: Power[] = [
+  { id: 'athens', name: 'Athens', color: '#4CAF50', homeCenters: [], startingUnits: [], startingEco: 4 },
+  { id: 'sparta', name: 'Sparta', color: '#2196F3', homeCenters: [], startingUnits: [], startingEco: 2 },
+  { id: 'macedon', name: 'Macedon', color: '#D2B48C', homeCenters: [], startingUnits: [], startingEco: 2 },
+  { id: 'satrapies', name: 'Satrapies', color: '#FF9800', homeCenters: [], startingUnits: [], startingEco: 3 },
+  { id: 'persia', name: 'Persia', color: '#795548', homeCenters: [], startingUnits: [], startingEco: 6 },
+  { id: 'phoenicia', name: 'Phoenicia', color: '#9C27B0', homeCenters: [], startingUnits: [], startingEco: 5 },
+  { id: 'carthage', name: 'Carthage', color: '#FFEB3B', homeCenters: [], startingUnits: [], startingEco: 4 },
+  { id: 'rome', name: 'Rome', color: '#F44336', homeCenters: [], startingUnits: [], startingEco: 2 },
+];
 
 function App() {
-  const [gameState, setGameState] = useState<GameState>(() => {
-    const state = createInitialState(POWERS);
-    state.territories = loadTerritories();
-    return state;
-  });
+  const [gameState, setGameState] = useState<GameState>(() => createInitialState(POWERS));
   const [selectedPower, setSelectedPower] = useState<PowerId | null>(null);
 
   const handlePowerSelect = (powerId: PowerId) => {
     setSelectedPower(powerId);
     setGameState({ ...gameState, activePower: powerId });
-  };
-
-  const handleAdjudicate = () => {
-    const results = adjudicate(gameState);
-    setGameState({ ...gameState, results, phase: 'adjudication' });
   };
 
   return (
@@ -46,7 +45,6 @@ function App() {
           <OrderPanel
             gameState={gameState}
             onOrdersChange={(orders) => setGameState({ ...gameState, orders })}
-            onAdjudicate={handleAdjudicate}
           />
         </aside>
 
