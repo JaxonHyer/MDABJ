@@ -5,20 +5,31 @@ interface MapDisplayProps {
 }
 
 export function MapDisplay({ gameState }: MapDisplayProps) {
+  const territoryCount = Object.keys(gameState.territories).length;
+  const unitCount = gameState.units.length;
+
   return (
     <div className="map-display">
-      <div className="map-placeholder">
-        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="10" y="10" width="80" height="80" rx="8" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" opacity="0.4"/>
-          <path d="M30 50 L50 30 L70 50 L50 70 Z" stroke="currentColor" strokeWidth="2" opacity="0.4"/>
-        </svg>
-        <p>Map display area</p>
-        <p style={{ fontSize: '0.8rem' }}>
-          SVG map will render here once uploaded
-        </p>
-        <p style={{ fontSize: '0.75rem', opacity: 0.5 }}>
-          {Object.keys(gameState.territories).length} territories loaded
-        </p>
+      <img 
+        src="./map.svg" 
+        alt="Mare Nostrum Map" 
+        style={{ 
+          width: '100%', 
+          height: 'auto',
+          display: 'block'
+        }}
+      />
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        right: '10px',
+        background: 'rgba(0,0,0,0.7)',
+        padding: '0.5rem',
+        borderRadius: '4px',
+        fontSize: '0.75rem'
+      }}>
+        <div>Territories: {territoryCount}</div>
+        <div>Units: {unitCount}</div>
       </div>
     </div>
   );
