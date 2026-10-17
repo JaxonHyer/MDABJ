@@ -12,7 +12,7 @@ describe('turn report', () => {
         { athens: 4 }
       ),
       'athens',
-      95,
+      7,
       'economic'
     );
 
@@ -22,7 +22,7 @@ describe('turn report', () => {
     expect(report).toMatch(/SUPPLY CENTRES/);
     expect(report).toMatch(/Athens\s+Athens/);
     expect(report).toMatch(/RESEARCH/);
-    expect(report).toMatch(/Athens: 95 \(economic\) -> \+3 point\(s\)/);
+    expect(report).toMatch(/Athens: 7\/7 \(economic\) -> \+3 point\(s\)/);
     expect(report).toMatch(/STANDING/);
     expect(report).toMatch(/A Athens, C Piraeus/);
   });

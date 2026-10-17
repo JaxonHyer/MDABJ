@@ -21,7 +21,11 @@ import { PowerSelector } from './components/PowerSelector';
 import { RetreatPanel } from './components/RetreatPanel';
 import { BuildPanel } from './components/BuildPanel';
 import { AdminPanel } from './components/AdminPanel';
-import { ResearchPanel } from './components/ResearchPanel';
+import {
+  createEmptyResearchDrafts,
+  ResearchDrafts,
+  ResearchPanel,
+} from './components/ResearchPanel';
 import { downloadFile, saveFileName, stateFromJson, stateToJson } from './io/save';
 import { buildTurnReport, turnReportFileName } from './io/turnReport';
 import {
@@ -78,10 +82,12 @@ function App() {
     return state;
   });
   const [selectedPower, setSelectedPower] = useState<PowerId | null>(null);
+  const [orderText, setOrderText] = useState('');
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [orderType, setOrderType] = useState<OrderType>('move');
   const [hoveredTerritoryId, setHoveredTerritoryId] = useState<string | null>(null);
   const [retreats, setRetreats] = useState<Record<string, string | null>>({});
+  const [researchDrafts, setResearchDrafts] = useState<ResearchDrafts>(createEmptyResearchDrafts);
   const [activeStep, setActiveStep] = useState<StepId>('move');
   const [supplyCentreMode, setSupplyCentreMode] = useState(false);
   const [supplyCentrePower, setSupplyCentrePower] = useState<PowerId>('athens');
@@ -188,6 +194,7 @@ function App() {
 
   const handleContinueToMove = () => {
     setGameState((prev) => (prev.phase === 'research' ? { ...prev, phase: 'orders' } : prev));
+    setResearchDrafts(createEmptyResearchDrafts());
     setSelectedUnitId(null);
     setActiveStep('move');
   };
@@ -248,6 +255,7 @@ function App() {
       return refreshSupplyCenters(next);
     });
     setRetreats({});
+    setResearchDrafts(createEmptyResearchDrafts());
     setSelectedUnitId(null);
     setActiveStep('research');
   };
@@ -257,8 +265,11 @@ function App() {
       const text = await file.text();
       const state = stateFromJson(text);
       setGameState(state);
+      setOrderText('');
+      setSelectedPower(state.activePower);
       setSelectedUnitId(null);
       setRetreats({});
+      setResearchDrafts(createEmptyResearchDrafts());
       setNotice(`Loaded ${file.name} - turn ${state.turn} (${state.year} BC).`);
     } catch (error) {
       setNotice(`Could not load the file: ${(error as Error).message}`);
@@ -381,6 +392,8 @@ function App() {
                 />
                 <OrderPanel
                   gameState={gameState}
+                  orderText={orderText}
+                  onOrderTextChange={setOrderText}
                   selectedUnitId={selectedUnitId}
                   orderType={orderType}
                   onSelectUnit={setSelectedUnitId}
@@ -408,6 +421,8 @@ function App() {
             {activeStep === 'research' && (
               <ResearchPanel
                 gameState={gameState}
+                drafts={researchDrafts}
+                onDraftsChange={setResearchDrafts}
                 onChange={setGameState}
                 onContinue={handleContinueToMove}
               />

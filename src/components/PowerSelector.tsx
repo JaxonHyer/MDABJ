@@ -10,6 +10,7 @@ export function PowerSelector({ powers, selectedPower, onSelect }: PowerSelector
   return (
     <div className="power-selector">
       <h3>Select Power</h3>
+      <p className="hint">Used as the default for pasted orders without a power label and for map entry.</p>
       <div className="power-list">
         {powers.map((power) => (
           <button

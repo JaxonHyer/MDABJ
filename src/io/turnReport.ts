@@ -81,8 +81,11 @@ export function buildTurnReport(state: GameState): string {
     for (const power of research) {
       const entry = state.researchScores[power];
       if (!entry) continue;
+      const scoreLabel = entry.score >= 0 && entry.score <= 7
+        ? `${entry.score}/7`
+        : `${entry.score} (legacy 0-100)`;
       lines.push(
-        `* ${POWER_NAME[power]}: ${entry.score} (${RESEARCH_TOPIC_LABEL[entry.topic].toLowerCase()}) ` +
+        `* ${POWER_NAME[power]}: ${scoreLabel} (${RESEARCH_TOPIC_LABEL[entry.topic].toLowerCase()}) ` +
           `-> +${researchBonus(entry.score)} point(s)`
       );
     }

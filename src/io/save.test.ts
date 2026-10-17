@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { serializeState, stateFromJson, stateToJson, territoryOverrides } from './save';
 import { makeState, unit } from '../engine/testHelpers';
-import { setSupplyCenter } from '../engine/gameState';
+import { collectIncome, setSupplyCenter } from '../engine/gameState';
 import { applyResearch } from '../engine/research';
 
 describe('save files', () => {
@@ -9,7 +9,7 @@ describe('save files', () => {
     const state = applyResearch(
       makeState([unit('athens', 'army', 'athens')], [], { athens: 4 }),
       'athens',
-      88,
+      6,
       'economic'
     );
     const restored = stateFromJson(stateToJson(state));
@@ -18,8 +18,22 @@ describe('save files', () => {
     expect(restored.year).toBe(state.year);
     expect(restored.units).toHaveLength(state.units.length);
     expect(restored.economy.athens.eco).toBe(state.economy.athens.eco);
-    expect(restored.economy.athens.researchScore).toBe(88);
+    expect(restored.economy.athens.researchScore).toBe(6);
     expect(restored.researchScores.athens?.topic).toBe('economic');
+    expect(restored.researchScoresTurn).toBe(state.turn);
+  });
+
+  it('saves the income receipt and does not collect it twice after a reload', () => {
+    const collected = collectIncome(
+      makeState([unit('athens', 'caravan', 'piraeus')], [], { athens: 4 }),
+    );
+    const restored = stateFromJson(stateToJson(collected));
+    const afterReload = collectIncome(restored);
+
+    expect(restored.incomeTurn).toBe(collected.turn);
+    expect(restored.lastIncome?.athens).toBe(1);
+    expect(afterReload.economy.athens.eco).toBe(5);
+    expect(afterReload.economy.athens.wealth).toBe(1);
   });
 
   it('stores supply centres the game master placed', () => {

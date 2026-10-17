@@ -419,6 +419,20 @@ describe('economy', () => {
 });
 
 describe('income', () => {
+  it('collects trade income after retreat decisions before the build phase', () => {
+    const state = {
+      ...makeState([unit('athens', 'caravan', 'piraeus')], [], { athens: 4 }),
+      phase: 'retreats' as const,
+    };
+    const afterRetreats = applyRetreats(state, {});
+    const collected = collectIncome(afterRetreats);
+
+    expect(collected.phase).toBe('retreats');
+    expect(collected.incomeTurn).toBe(state.turn);
+    expect(collected.economy.athens.eco).toBe(5);
+    expect(collected.lastIncome?.athens).toBe(1);
+  });
+
   it('adds the trade income to the ledger exactly once', () => {
     const state = makeState([unit('athens', 'caravan', 'piraeus')], [], { athens: 4 });
 

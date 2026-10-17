@@ -32,8 +32,12 @@ export function RetreatPanel({
       <div className="phase-panel">
         <h3>Retreat Phase</h3>
         <p className="hint">No units were dislodged. Nothing to do.</p>
+        <p className="income-collection-note">
+          Trade income is collected automatically when you continue, before the Build Phase. No
+          separate collection step is needed.
+        </p>
         <button className="primary-button" onClick={onConfirm}>
-          Continue to Build Phase
+          Collect eco &amp; continue to Build Phase
         </button>
       </div>
     );
@@ -46,6 +50,10 @@ export function RetreatPanel({
         Every dislodged unit must retreat to an unoccupied neighbour, or it is
         eliminated.
       </p>
+      <p className="income-collection-note">
+        When you resolve these choices, trade income is collected automatically for every power
+        before the Build Phase. It is counted only once this turn.
+      </p>
       {dislodged.map((unit) => (
         <RetreatRow
           key={unit.id}
@@ -56,7 +64,7 @@ export function RetreatPanel({
         />
       ))}
       <button className="primary-button" onClick={onConfirm}>
-        Resolve Retreats
+        Resolve retreats &amp; collect eco
       </button>
     </div>
   );

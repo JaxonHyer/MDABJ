@@ -32,7 +32,10 @@ export interface SaveFile {
   results: AdjudicationResult[];
   builds: BuildAction[];
   scOwners: Record<string, PowerId>;
+  lastIncome?: Record<PowerId, number>;
+  incomeTurn?: number;
   researchScores: Partial<Record<PowerId, { score: number; topic: ResearchTopic }>>;
+  researchScoresTurn?: number;
   notes?: string;
   /** Only the fields that differ from the built in map data. */
   territoryOverrides: Record<string, Partial<Territory>>;
@@ -81,7 +84,10 @@ export function serializeState(state: GameState): SaveFile {
     results: state.results,
     builds: state.builds,
     scOwners: state.scOwners,
+    lastIncome: state.lastIncome,
+    incomeTurn: state.incomeTurn,
     researchScores: state.researchScores,
+    researchScoresTurn: state.researchScoresTurn,
     notes: state.notes,
     territoryOverrides: territoryOverrides(state),
   };
@@ -121,7 +127,10 @@ export function stateFromJson(text: string): GameState {
     economy: data.economy ?? ({} as Record<PowerId, Economy>),
     activePower: data.activePower ?? null,
     scOwners: data.scOwners ?? {},
+    lastIncome: data.lastIncome,
+    incomeTurn: data.incomeTurn,
     researchScores: data.researchScores ?? {},
+    researchScoresTurn: data.researchScoresTurn,
     notes: data.notes,
   };
 }
