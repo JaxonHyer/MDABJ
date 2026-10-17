@@ -7,6 +7,8 @@ import {
   buildableHomeCenters,
   eliteUnitCount,
   militaryUnitCount,
+  occupiedCities,
+  freeSupplySlots,
   unitLimit,
   ownedSupplyCenters,
   pendingBuildCost,
@@ -252,6 +254,7 @@ describe('supply centres and unit limits', () => {
     expect(militaryUnitCount(state, 'athens')).toBe(3);
     expect(unitLimit(state, 'athens')).toEqual({
       supplyCenters: 3,
+      cities: 0,
       units: 3,
       bought: 1,
       max: 4,
@@ -454,5 +457,72 @@ describe('builds', () => {
 
     expect(next.units.filter((u) => u.power === 'athens')).toHaveLength(0);
     expect(next.economy.athens.eco).toBe(6);
+  });
+});
+
+describe('cities', () => {
+  it('knows which cities a power occupies', () => {
+    const state = makeState([unit('athens', 'army', 'delphi')]);
+
+    expect(occupiedCities(state, 'athens')).toEqual(['delphi']);
+    expect(occupiedCities(state, 'sparta')).toEqual([]);
+  });
+
+  it('lets a city sustain a unit', () => {
+    // One supply centre and one city sustain two military units.
+    const state = makeState([
+      unit('athens', 'army', 'athens'),
+      unit('athens', 'army', 'delphi'),
+    ]);
+
+    const limit = unitLimit(state, 'athens');
+    expect(limit.supplyCenters).toBe(1);
+    expect(limit.cities).toBe(1);
+    expect(limit.units).toBe(2);
+    expect(limit.max).toBe(2);
+  });
+
+  it('does not let a city sustain more than one unit', () => {
+    // Athens holds one supply centre and one city, the third army stands in
+    // a plain province and has to be paid for.
+    const state = makeState([
+      unit('athens', 'army', 'athens'),
+      unit('athens', 'army', 'delphi'),
+      unit('athens', 'army', 'piraeus'),
+    ]);
+
+    expect(unitLimit(state, 'athens').max).toBe(2);
+  });
+
+  it('never allows a unit to be built in a city', () => {
+    const state = makeState([unit('athens', 'army', 'athens')], [], { athens: 6 });
+    const action: BuildAction = {
+      id: 'b1',
+      power: 'athens',
+      kind: 'army',
+      territoryId: 'delphi',
+    };
+
+    const validation = validateBuild(state, action, [action]);
+    expect(validation.ok).toBe(false);
+    expect(validation.errors.join(' ')).toContain('city');
+  });
+
+  it('counts an occupied city as a free slot for a unit that is built', () => {
+    // The city is held by a caravan, so it sustains the army that is built.
+    const state = makeState(
+      [unit('athens', 'army', 'athens'), unit('athens', 'caravan', 'delphi')],
+      [],
+      { athens: 6 }
+    );
+    const action: BuildAction = {
+      id: 'b1',
+      power: 'athens',
+      kind: 'army',
+      territoryId: 'athens',
+    };
+
+    expect(validateBuild(state, action, [action]).cost).toBe(0);
+    expect(freeSupplySlots(state, 'athens')).toBe(1);
   });
 });

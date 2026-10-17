@@ -691,6 +691,7 @@ export function MapDisplay({
           <span>
             {hovered.type === 'sea' ? 'Sea zone' : hovered.type === 'coastal' ? 'Coastal' : 'Land'}
             {hovered.isSupplyCenter ? ' • Supply centre' : ''}
+            {hovered.isCity ? ' • City (sustains a unit)' : ''}
             {hovered.isTradeNode ? ` • Trade node (${hovered.tradeNodeValue} eco)` : ''}
             {hovered.fortified ? ' • Fortified' : ''}
           </span>

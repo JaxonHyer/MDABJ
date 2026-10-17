@@ -87,12 +87,16 @@ scripts/
 10. **Income is collected exactly once per turn**: `collectIncome(state)` is guarded by `state.incomeTurn`.
     It is called when the retreats are resolved and again when the turn is finished - the second call
     is a no-op. The income is added to the ledger **before** the supply centre count is refreshed.
-11. **Occupancy colours**: every territory that has a supply centre **or a black dot** is drawn with a
+11. **Cities sustain a unit**: the small black dots of the map are cities. A city cannot host a new
+    unit (builds only happen in home supply centres, rules 3.3), but every city a power occupies
+    sustains one of its military units - just like a supply centre (rules 2.2). A power may therefore
+    keep `supply centres + occupied cities + units paid for with eco` military units.
+12. **Occupancy colours**: every territory that has a supply centre **or a black dot** is drawn with a
     circle in the colour of the power that occupies it (the `<g className="map-occupied">` layer of
     `MapDisplay.tsx`, fed by `SUPPLY_CENTRE_MARKS` and `BLACK_DOT_MARKS`).
-12. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG), Turn report (txt).
-    Every export is previewed in the app so the game master can show it to the players.
-13. **Tests**: 102 vitest cases across adjudicator, game state, orders, research, save/load,
+13. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG, with a *Cities* column),
+    Turn report (txt, with a *CITIES* section).
+14. **Tests**: 110 vitest cases across adjudicator, game state, orders, research, save/load,
     turn report, DATC style edge cases and map data. `npx tsc --noEmit` is clean,
     `npm run build` succeeds.
 
@@ -190,6 +194,18 @@ or if the fleet is ordered to sail away.
 ### Supply centres
 - Captured at the end of the turn. A supply centre that changes hands **loses its fortification**.
 
+### Cities (the black dots of the map)
+- The rulebook only defines two markers: the **filled circle** (supply centre, rules 2.2) and the
+  **gold star** (trade node, rules 2.3). The small black dots are the cities of the printed map
+  (Jerusalem, Byzantium, Crimea, Baleares, Sardinia, Cappadocia, Memphis, Epirus, Delphi, Dalmatia,
+  Neapolis) - they are not described in the rulebook text.
+- The game master's rule: a city **cannot build a unit** (builds only happen in home supply centres,
+  rules 3.3) but it **can sustain a unit** like a supply centre (rules 2.2: "Each supply center you
+  control at the end of a turn allows you to maintain one army or one fleet").
+- Implemented as a pool: a power may keep `supply centres it controls + cities it occupies + units
+  paid for with economic points` military units. A city is occupied when a unit of the power stands
+  in it; the city is tagged with `"isCity": true` in `src/data/territories.json`.
+
 ### Documented interpretations (rules are ambiguous here)
 - A caravan in a power's home centre earns the full node value (Quick Reference wording).
 - A convoying fleet transports but does not support (standard Diplomacy reading).
@@ -202,8 +218,10 @@ or if the fleet is ordered to sail away.
   It contains `TERRITORY_POSITIONS` (96), `TERRITORY_LABEL_TEXT`, `SUPPLY_CENTRE_MARKS` (22),
   `NEUTRAL_MARKS` (5) and `BLACK_DOT_MARKS` (11 city dots of the printed map).
 - The black dots are **original artwork of the printed map**, not something that was added - the rulebook
-  only knows the filled circle (supply centre) and the gold star (trade node). They are used to show the
-  owner of a city in the colour of the occupying power.
+  only knows the filled circle (supply centre) and the gold star (trade node). They mark the cities and
+  are used to show the owner of a city in the colour of the occupying power. The 11 cities are flagged
+  with `"isCity": true` in `src/data/territories.json`; a test keeps that list and the extracted
+  `BLACK_DOT_MARKS` in sync.
 - Starting positions: Athens (SC: Athens/Rhodes/Crete, 4 eco), Sparta (Sparta/Corinth, 2 eco, elite army),
   Macedon (Macedon/Thessaly/Thrace, 2 eco), Satrapies (Bithynia/Galatia/Miletus, 3 eco),
   Persia (Damascus/Petra/Alexandria, 6 eco), Phoenicia (Sidon/Tyre/Cyprus, 5 eco),
@@ -216,7 +234,7 @@ npm install
 npm run dev          # dev server
 npm run build        # production build -> dist/
 npm run preview      # serve the build
-npm test             # vitest (102 cases)
+npm test             # vitest (110 cases)
 npx tsc --noEmit     # type check
 npm run map:extract  # regenerate territoryPositions.ts from map.svg
 ```

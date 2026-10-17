@@ -50,6 +50,12 @@ export interface Territory {
   isSupplyCenter: boolean;
   homePower?: PowerId;      // Which power this is a home center for (or null)
   isTradeNode: boolean;
+  /**
+   * A city - the small black dot of the printed map. A city can sustain one
+   * unit of the power that occupies it (like a supply centre), but no unit
+   * can be built in it (rules 2.2 / 3.3).
+   */
+  isCity?: boolean;
   tradeNodeValue?: number;  // Eco points per turn (if trade node)
   tradeRoutes?: string[];   // IDs of connected trade nodes (for caravans)
   fortified?: boolean;      // Section 5.4 - defending unit gets +1

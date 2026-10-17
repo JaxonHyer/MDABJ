@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadTerritories } from './gameData';
 import {
+  BLACK_DOT_MARKS,
   NEUTRAL_MARKS,
   SUPPLY_CENTRE_MARKS,
   TERRITORY_LABEL_TEXT,
@@ -84,5 +85,15 @@ describe('territory data', () => {
       (id) => territories[id].isTradeNode && !territories[id].tradeNodeValue
     );
     expect(missing).toEqual([]);
+  });
+
+  it('marks exactly the cities of the map as cities', () => {
+    const cities = ids.filter((id) => territories[id].isCity);
+    expect(cities.sort()).toEqual(Object.keys(BLACK_DOT_MARKS).sort());
+  });
+
+  it('never makes a city a supply centre', () => {
+    const both = ids.filter((id) => territories[id].isCity && territories[id].isSupplyCenter);
+    expect(both).toEqual([]);
   });
 });

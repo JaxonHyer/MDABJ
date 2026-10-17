@@ -89,7 +89,8 @@ export function BuildPanel({ gameState, onBuildsChange, onFinishTurn }: BuildPan
           Left: <strong className={remaining < 0 ? 'danger-text' : ''}>{remaining}</strong>
         </span>
         <span>
-          Units: <strong>{effectiveUnits}</strong> / {supplyCenters} SC (max {maxUnits})
+          Units: <strong>{effectiveUnits}</strong> / {supplyCenters} SC
+          {limit.cities > 0 && ` + ${limit.cities} city`} (max {maxUnits})
           {limit.bought > 0 && ` (${limit.bought} paid for)`}
         </span>
         <span>

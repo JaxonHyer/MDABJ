@@ -1,6 +1,6 @@
 import { GameState, PowerId } from '../types/game';
 import { ALL_POWERS } from '../engine/economy';
-import { ownedSupplyCenters } from '../engine/gameState';
+import { occupiedCities, ownedSupplyCenters } from '../engine/gameState';
 import { RESEARCH_TOPIC_LABEL } from '../types/game';
 import { researchBonus } from '../engine/research';
 import { collectStats } from './boardExport';
@@ -56,6 +56,18 @@ export function buildTurnReport(state: GameState): string {
       (id) => state.territories[id]?.name ?? id
     );
     lines.push(`${pad(POWER_NAME[power], 12)} ${centers.length ? centers.join(', ') : '-'}`);
+  }
+  lines.push('');
+
+  // Cities ------------------------------------------------------------------
+  lines.push('CITIES');
+  lines.push('-'.repeat(6));
+  for (const power of ALL_POWERS) {
+    const cities = occupiedCities(state, power).map(
+      (id) => state.territories[id]?.name ?? id
+    );
+    if (cities.length === 0) continue;
+    lines.push(`${pad(POWER_NAME[power], 12)} ${cities.join(', ')}`);
   }
   lines.push('');
 
@@ -116,9 +128,9 @@ export function buildTurnReport(state: GameState): string {
   const stats = collectStats(state);
   lines.push('STANDING');
   lines.push('-'.repeat(8));
-  const header = ['Power', 'Eco', 'Mil', 'Dip', 'Research', 'SC', 'Units', 'Wealth'];
+  const header = ['Power', 'Eco', 'Mil', 'Dip', 'Research', 'SC', 'City', 'Units', 'Wealth'];
   lines.push(header.map((cell, index) => pad(cell, index === 0 ? 12 : 9)).join(''));
-  lines.push('-'.repeat(12 + 9 * 7));
+  lines.push('-'.repeat(12 + 9 * 8));
   for (const stat of stats) {
     const cells = [
       POWER_NAME[stat.power],
@@ -127,6 +139,7 @@ export function buildTurnReport(state: GameState): string {
       String(stat.diplomatic),
       String(stat.researchScore),
       String(stat.supplyCenters),
+      String(stat.cities),
       String(stat.units),
       String(stat.wealth),
     ];
