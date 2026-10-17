@@ -234,20 +234,28 @@ export async function downloadBoardSvg(overlay: SVGSVGElement | null, filename: 
   downloadFile(filename, svg, 'image/svg+xml');
 }
 
+/** Renders the board as a PNG data url (used for the download and the preview). */
+export async function boardPngDataUrl(overlay: SVGSVGElement | null): Promise<string> {
+  const svg = await buildBoardSvg(overlay);
+  return svgToPng(svg, BOARD_WIDTH, BOARD_HEIGHT, 2);
+}
+
+/** Renders the statistics sheet as a PNG data url. */
+export async function statsPngDataUrl(state: GameState): Promise<string> {
+  const svg = buildStatsSvg(state);
+  const width = Number(/width="(\d+)"/.exec(svg)?.[1] ?? 900);
+  const height = Number(/height="(\d+)"/.exec(svg)?.[1] ?? 500);
+  return svgToPng(svg, width, height, 2);
+}
+
 /** Downloads the board as a PNG file. */
 export async function downloadBoardPng(overlay: SVGSVGElement | null, filename: string) {
-  const svg = await buildBoardSvg(overlay);
-  const dataUrl = await svgToPng(svg, BOARD_WIDTH, BOARD_HEIGHT, 2);
-  downloadDataUrl(filename, dataUrl);
+  downloadDataUrl(filename, await boardPngDataUrl(overlay));
 }
 
 /** Downloads the statistics sheet as a PNG file. */
 export async function downloadStatsPng(state: GameState, filename: string) {
-  const svg = buildStatsSvg(state);
-  const width = Number(/width="(\d+)"/.exec(svg)?.[1] ?? 900);
-  const height = Number(/height="(\d+)"/.exec(svg)?.[1] ?? 500);
-  const dataUrl = await svgToPng(svg, width, height, 2);
-  downloadDataUrl(filename, dataUrl);
+  downloadDataUrl(filename, await statsPngDataUrl(state));
 }
 
 /** Downloads the statistics sheet as an SVG file. */

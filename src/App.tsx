@@ -24,10 +24,13 @@ import { BuildPanel } from './components/BuildPanel';
 import { AdminPanel } from './components/AdminPanel';
 import { downloadFile, saveFileName, stateFromJson, stateToJson } from './io/save';
 import {
+  boardPngDataUrl,
+  buildBoardSvg,
+  buildStatsSvg,
   downloadBoardPng,
-  downloadBoardSvg,
   downloadStatsPng,
   downloadStatsSvg,
+  statsPngDataUrl,
 } from './io/boardExport';
 
 const POWERS: Power[] = loadPowers();
@@ -47,6 +50,11 @@ function App() {
   const [supplyCentreMode, setSupplyCentreMode] = useState(false);
   const [supplyCentrePower, setSupplyCentrePower] = useState<PowerId>('athens');
   const [notice, setNotice] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    title: string;
+    dataUrl: string;
+    fileName: string;
+  } | null>(null);
   const overlayRef = useRef<SVGSVGElement>(null);
 
   const selectedUnit: Unit | undefined = useMemo(
@@ -210,7 +218,14 @@ function App() {
 
   const handleExportBoardSvg = async () => {
     try {
-      await downloadBoardSvg(overlayRef.current, `mare-nostrum-board-turn${gameState.turn}.svg`);
+      const fileName = `mare-nostrum-board-turn${gameState.turn}.svg`;
+      const svg = await buildBoardSvg(overlayRef.current);
+      downloadFile(fileName, svg, 'image/svg+xml');
+      setPreview({
+        title: `Board - turn ${gameState.turn}`,
+        dataUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+        fileName,
+      });
       setNotice('Board exported as SVG.');
     } catch (error) {
       setNotice(`Board export failed: ${(error as Error).message}`);
@@ -219,7 +234,10 @@ function App() {
 
   const handleExportBoardPng = async () => {
     try {
-      await downloadBoardPng(overlayRef.current, `mare-nostrum-board-turn${gameState.turn}.png`);
+      const fileName = `mare-nostrum-board-turn${gameState.turn}.png`;
+      const dataUrl = await boardPngDataUrl(overlayRef.current);
+      downloadBoardPng(overlayRef.current, fileName);
+      setPreview({ title: `Board - turn ${gameState.turn}`, dataUrl, fileName });
       setNotice('Board exported as PNG.');
     } catch (error) {
       setNotice(`Board export failed: ${(error as Error).message}`);
@@ -227,13 +245,23 @@ function App() {
   };
 
   const handleExportStatsSvg = () => {
-    downloadStatsSvg(gameState, `mare-nostrum-stats-turn${gameState.turn}.svg`);
+    const fileName = `mare-nostrum-stats-turn${gameState.turn}.svg`;
+    const svg = buildStatsSvg(gameState);
+    downloadStatsSvg(gameState, fileName);
+    setPreview({
+      title: `Board stats - turn ${gameState.turn}`,
+      dataUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+      fileName,
+    });
     setNotice('Statistics exported as SVG.');
   };
 
   const handleExportStatsPng = async () => {
     try {
-      await downloadStatsPng(gameState, `mare-nostrum-stats-turn${gameState.turn}.png`);
+      const fileName = `mare-nostrum-stats-turn${gameState.turn}.png`;
+      const dataUrl = await statsPngDataUrl(gameState);
+      downloadStatsPng(gameState, fileName);
+      setPreview({ title: `Board stats - turn ${gameState.turn}`, dataUrl, fileName });
       setNotice('Statistics exported as PNG.');
     } catch (error) {
       setNotice(`Statistics export failed: ${(error as Error).message}`);
@@ -355,6 +383,35 @@ function App() {
           {supplyCentreMode && <span className="warning">Placing supply centres</span>}
         </div>
         {notice && <div className="notice">{notice}</div>}
+
+        {preview && (
+          <div className="preview-backdrop" onClick={() => setPreview(null)}>
+            <div className="preview" onClick={(event) => event.stopPropagation()}>
+              <div className="preview-head">
+                <h3>{preview.title}</h3>
+                <div className="preview-actions">
+                  <a className="primary-button" href={preview.dataUrl} download={preview.fileName}>
+                    Download
+                  </a>
+                  <a
+                    className="secondary-button"
+                    href={preview.dataUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open in new tab
+                  </a>
+                  <button className="secondary-button" onClick={() => setPreview(null)}>
+                    Close
+                  </button>
+                </div>
+              </div>
+              <div className="preview-body">
+                <img src={preview.dataUrl} alt={preview.title} />
+              </div>
+            </div>
+          </div>
+        )}
       </footer>
     </div>
   );

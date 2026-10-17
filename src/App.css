@@ -633,3 +633,88 @@ body {
   color: #ffd54f;
   font-weight: 700;
 }
+
+/* Export preview (game master -> players) */
+.preview-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 14, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+
+.preview {
+  background: #14161f;
+  border: 1px solid #2a2f3d;
+  border-radius: 10px;
+  max-width: min(1500px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2f3d;
+}
+
+.preview-head h3 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.preview-actions a {
+  text-decoration: none;
+}
+
+.preview-body {
+  overflow: auto;
+  padding: 12px;
+  background: #0b0d13;
+}
+
+.preview-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  background: #232838;
+  color: #dfe3ee;
+  border: 1px solid #363c4d;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.secondary-button:hover {
+  background: #2c3244;
+}
+
+.preview-head .primary-button,
+.preview-head .secondary-button {
+  width: auto;
+  margin-top: 0;
+}
