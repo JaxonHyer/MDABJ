@@ -199,6 +199,8 @@ export class Adjudicator {
         if (o.target !== supporter.territoryId) return false;
         const moving = this.getUnit(o.unitId);
         if (!moving) return false;
+        // A power can neither dislodge nor cut the support of its own units.
+        if (moving.power === supporter.power) return false;
         // An attack coming from the province that is being supported into
         // does not cut the support.
         if (supportedProvince && moving.territoryId === supportedProvince) return false;

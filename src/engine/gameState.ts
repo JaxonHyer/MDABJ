@@ -11,7 +11,7 @@ import {
   Unit,
   isMilitary,
 } from '../types/game';
-import { ALL_POWERS, BUILD_COST, calculateIncome } from './economy';
+import { ALL_POWERS, BUILD_COST } from './economy';
 
 export function createInitialState(powers: Power[]): GameState {
   const economy: GameState['economy'] = {} as GameState['economy'];
@@ -32,7 +32,7 @@ export function createInitialState(powers: Power[]): GameState {
   return {
     turn: 1,
     year: 350,
-    phase: 'orders',
+    phase: 'research',
     territories: {}, // Will be populated from map data
     units,
     orders: [],
@@ -47,11 +47,12 @@ export function createInitialState(powers: Power[]): GameState {
 
 export function nextPhase(phase: Phase): Phase {
   switch (phase) {
+    case 'research': return 'orders';
     case 'orders': return 'adjudication';
     case 'adjudication': return 'retreats';
     case 'retreats': return 'builds';
     case 'builds': return 'complete';
-    case 'complete': return 'orders';
+    case 'complete': return 'research';
   }
 }
 
@@ -438,19 +439,18 @@ export function maxAffordableMilitaryUnits(state: GameState, power: PowerId): nu
  * Finishes the turn: collects the income, resets the orders and starts the
  * next turn.
  */
+/**
+ * Ends the turn. The income has already been collected in the income phase
+ * (before the build phase, rules 4.7), so only the bookkeeping is left.
+ */
 export function advanceTurn(state: GameState): GameState {
-  const income = calculateIncome(state, state.units, new Set());
   const economy = { ...state.economy };
   for (const power of ALL_POWERS) {
     const current = economy[power];
     if (!current) continue;
-    const scCount = ownedSupplyCenters(state, power).length;
-    const gained = income[power] ?? 0;
     economy[power] = {
       ...current,
-      eco: Math.min(15, current.eco + gained),
-      wealth: current.wealth + gained,
-      supplyCenters: scCount,
+      supplyCenters: ownedSupplyCenters(state, power).length,
     };
   }
 
@@ -458,12 +458,11 @@ export function advanceTurn(state: GameState): GameState {
     ...state,
     turn: state.turn + 1,
     year: state.year - 15, // Each turn is 15 years, going backward in BC
-    phase: 'orders',
+    phase: 'research',
     orders: [],
     results: [],
     builds: [],
     economy,
-    lastIncome: income,
   };
 }
 

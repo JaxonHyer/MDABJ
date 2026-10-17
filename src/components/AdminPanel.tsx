@@ -16,6 +16,7 @@ interface AdminPanelProps {
   onExportBoardPng: () => void;
   onExportStatsSvg: () => void;
   onExportStatsPng: () => void;
+  onExportTurnReport: () => void;
   /** "Place supply centre" mode is on - map clicks move supply centres. */
   supplyCentreMode: boolean;
   onToggleSupplyCentreMode: (on: boolean) => void;
@@ -44,6 +45,7 @@ export function AdminPanel({
   onExportBoardPng,
   onExportStatsSvg,
   onExportStatsPng,
+  onExportTurnReport,
   supplyCentreMode,
   onToggleSupplyCentreMode,
   supplyCentrePower,
@@ -276,6 +278,9 @@ export function AdminPanel({
             </button>
             <button className="primary-button" onClick={onExportStatsPng}>
               Export stats (PNG)
+            </button>
+            <button className="primary-button" onClick={onExportTurnReport}>
+              Export turn report (txt)
             </button>
           </div>
         </div>

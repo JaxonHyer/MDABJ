@@ -14,9 +14,9 @@ import {
   validRetreatDestinations,
   validateBuild,
 } from './gameState';
-import { calculateIncome } from './economy';
+import { applyIncome, calculateIncome } from './economy';
 import { makeState, unit } from './testHelpers';
-import { BuildAction, GameState } from '../types/game';
+import { BuildAction } from '../types/game';
 
 describe('retreats', () => {
   const dislodged = (territoryId: string, attackedFrom: string) => ({
@@ -335,7 +335,8 @@ describe('turn flow', () => {
 
     expect(next.turn).toBe(2);
     expect(next.year).toBe(335);
-    expect(next.phase).toBe('orders');
+    // Every turn starts with the research phase (rules 4.1).
+    expect(next.phase).toBe('research');
     expect(next.orders).toHaveLength(0);
   });
 });
@@ -373,16 +374,21 @@ describe('economy', () => {
   });
 
   it('applies the banking cap of 15 eco', () => {
-    let state: GameState = makeState([], [], { athens: 14 });
-    state = {
-      ...state,
-      economy: {
-        ...state.economy,
-        athens: { eco: 14, supplyCenters: 0, military: 0, diplomatic: 0, researchScore: 0, wealth: 0 },
-      },
-    };
-    const next = advanceTurn({ ...state, units: [unit('athens', 'caravan', 'jerusalem')] });
+    const state = makeState([unit('athens', 'caravan', 'jerusalem')], [], { athens: 14 });
+    const income = calculateIncome(state, state.units);
+    const next = applyIncome(state, income);
 
     expect(next.economy.athens.eco).toBe(15);
+  });
+
+  it('collects the income once per turn', () => {
+    const state = makeState([unit('athens', 'caravan', 'jerusalem')], [], { athens: 4 });
+    const income = calculateIncome(state, state.units);
+    const afterIncome = applyIncome(state, income);
+    const next = advanceTurn(afterIncome);
+
+    // 4 eco + 2 for Jerusalem, and the income is not counted a second time.
+    expect(next.economy.athens.eco).toBe(6);
+    expect(next.economy.athens.wealth).toBe(2);
   });
 });

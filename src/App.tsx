@@ -12,7 +12,7 @@ import {
   setSupplyCenter,
 } from './engine/gameState';
 import { adjudicate } from './engine/adjudicator';
-import { calculateIncome } from './engine/economy';
+import { ALL_POWERS, applyIncome, calculateIncome } from './engine/economy';
 import { loadPowers, loadTerritories } from './data/gameData';
 import { supportableUnit, upsertOrder, validOrderTargets } from './engine/orders';
 import { MapDisplay } from './components/MapDisplay';
@@ -22,7 +22,9 @@ import { PowerSelector } from './components/PowerSelector';
 import { RetreatPanel } from './components/RetreatPanel';
 import { BuildPanel } from './components/BuildPanel';
 import { AdminPanel } from './components/AdminPanel';
+import { ResearchPanel } from './components/ResearchPanel';
 import { downloadFile, saveFileName, stateFromJson, stateToJson } from './io/save';
+import { buildTurnReport, turnReportFileName } from './io/turnReport';
 import {
   boardPngDataUrl,
   buildBoardSvg,
@@ -52,9 +54,13 @@ function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [preview, setPreview] = useState<{
     title: string;
-    dataUrl: string;
     fileName: string;
+    /** Image preview (board or stats sheet). */
+    dataUrl?: string;
+    /** Text preview (turn report). */
+    text?: string;
   } | null>(null);
+  const [copied, setCopied] = useState(false);
   const overlayRef = useRef<SVGSVGElement>(null);
 
   const selectedUnit: Unit | undefined = useMemo(
@@ -135,6 +141,11 @@ function App() {
     [orderType, selectedUnitId, supplyCentreMode, supplyCentrePower]
   );
 
+  const handleContinueToOrders = () => {
+    setGameState((prev) => (prev.phase === 'research' ? { ...prev, phase: 'orders' } : prev));
+    setSelectedUnitId(null);
+  };
+
   const handleAdjudicate = () => {
     setGameState((prev) => {
       const outcome = adjudicate(prev);
@@ -170,17 +181,19 @@ function App() {
         }
       }
       const income = calculateIncome(cleaned, cleaned.units, moved);
-      const economy = { ...cleaned.economy };
-      for (const [power, value] of Object.entries(income)) {
-        const current = economy[power as PowerId];
+      // The income is collected before the build phase (rules 4.7) and counts
+      // towards the wealth of the power.
+      const withIncome = applyIncome(cleaned, income);
+      const economy = { ...withIncome.economy };
+      for (const power of ALL_POWERS) {
+        const current = economy[power];
         if (!current) continue;
-        economy[power as PowerId] = {
+        economy[power] = {
           ...current,
-          eco: Math.min(15, current.eco + value),
-          supplyCenters: ownedSupplyCenters(cleaned, power as PowerId).length,
+          supplyCenters: ownedSupplyCenters(cleaned, power).length,
         };
       }
-      return { ...cleaned, phase: 'builds', economy, lastIncome: income };
+      return { ...withIncome, phase: 'builds', economy };
     });
   };
 
@@ -268,7 +281,16 @@ function App() {
     }
   };
 
+  const handleExportTurnReport = () => {
+    const text = buildTurnReport(gameState);
+    const fileName = turnReportFileName(gameState);
+    downloadFile(fileName, text, 'text/plain');
+    setPreview({ title: `Turn report - turn ${gameState.turn}`, fileName, text });
+    setNotice('Turn report exported.');
+  };
+
   const phaseLabel = {
+    research: 'Research phase',
     orders: 'Writing orders',
     adjudication: 'Adjudication',
     retreats: 'Retreats',
@@ -310,6 +332,7 @@ function App() {
               onExportBoardPng={handleExportBoardPng}
               onExportStatsSvg={handleExportStatsSvg}
               onExportStatsPng={handleExportStatsPng}
+              onExportTurnReport={handleExportTurnReport}
               supplyCentreMode={supplyCentreMode}
               onToggleSupplyCentreMode={setSupplyCentreMode}
               supplyCentrePower={supplyCentrePower}
@@ -317,13 +340,21 @@ function App() {
             />
           ) : (
             <>
-              <PowerSelector
-                powers={POWERS}
-                selectedPower={selectedPower}
-                onSelect={handlePowerSelect}
-              />
+              {gameState.phase !== 'research' && (
+                <PowerSelector
+                  powers={POWERS}
+                  selectedPower={selectedPower}
+                  onSelect={handlePowerSelect}
+                />
+              )}
 
-              {gameState.phase === 'orders' ? (
+              {gameState.phase === 'research' ? (
+                <ResearchPanel
+                  gameState={gameState}
+                  onChange={setGameState}
+                  onContinue={handleContinueToOrders}
+                />
+              ) : gameState.phase === 'orders' ? (
                 <OrderPanel
                   gameState={gameState}
                   selectedUnitId={selectedUnitId}
@@ -390,24 +421,52 @@ function App() {
               <div className="preview-head">
                 <h3>{preview.title}</h3>
                 <div className="preview-actions">
-                  <a className="primary-button" href={preview.dataUrl} download={preview.fileName}>
-                    Download
-                  </a>
-                  <a
-                    className="secondary-button"
-                    href={preview.dataUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open in new tab
-                  </a>
+                  {preview.dataUrl ? (
+                    <>
+                      <a className="primary-button" href={preview.dataUrl} download={preview.fileName}>
+                        Download
+                      </a>
+                      <a
+                        className="secondary-button"
+                        href={preview.dataUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open in new tab
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="primary-button"
+                        onClick={() => {
+                          downloadFile(preview.fileName, preview.text ?? '', 'text/plain');
+                        }}
+                      >
+                        Download
+                      </button>
+                      <button
+                        className="secondary-button"
+                        onClick={async () => {
+                          await navigator.clipboard?.writeText(preview.text ?? '');
+                          setCopied(true);
+                        }}
+                      >
+                        {copied ? 'Copied' : 'Copy text'}
+                      </button>
+                    </>
+                  )}
                   <button className="secondary-button" onClick={() => setPreview(null)}>
                     Close
                   </button>
                 </div>
               </div>
               <div className="preview-body">
-                <img src={preview.dataUrl} alt={preview.title} />
+                {preview.dataUrl ? (
+                  <img src={preview.dataUrl} alt={preview.title} />
+                ) : (
+                  <pre className="preview-text">{preview.text}</pre>
+                )}
               </div>
             </div>
           </div>

@@ -718,3 +718,40 @@ body {
   width: auto;
   margin-top: 0;
 }
+
+/* Research phase */
+.research-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0.9rem;
+}
+
+.research-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: #1b1f2b;
+  border: 1px solid #2a2f3d;
+  border-radius: 6px;
+}
+
+.research-row input {
+  width: 4.5rem;
+}
+
+.research-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-text {
+  margin: 0;
+  padding: 4px;
+  color: #e6e9f2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.45;
+  white-space: pre;
+}

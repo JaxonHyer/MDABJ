@@ -15,6 +15,7 @@ export type UnitType = 'army' | 'fleet' | 'caravan';
 export type TerritoryType = 'land' | 'sea' | 'coastal';
 
 export type Phase =
+  | 'research'     // Scoring the research of the turn (rules 4.1)
   | 'orders'       // Writing movement orders
   | 'adjudication' // Resolving orders
   | 'retreats'     // Dislodged units retreat
