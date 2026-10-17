@@ -11,7 +11,7 @@ import {
   Unit,
   isMilitary,
 } from '../types/game';
-import { ALL_POWERS, BUILD_COST } from './economy';
+import { ALL_POWERS, BUILD_COST, applyIncome, calculateIncome } from './economy';
 
 export function createInitialState(powers: Power[]): GameState {
   const economy: GameState['economy'] = {} as GameState['economy'];
@@ -32,7 +32,7 @@ export function createInitialState(powers: Power[]): GameState {
   return {
     turn: 1,
     year: 350,
-    phase: 'research',
+    phase: 'orders',
     territories: {}, // Will be populated from map data
     units,
     orders: [],
@@ -47,12 +47,11 @@ export function createInitialState(powers: Power[]): GameState {
 
 export function nextPhase(phase: Phase): Phase {
   switch (phase) {
-    case 'research': return 'orders';
     case 'orders': return 'adjudication';
     case 'adjudication': return 'retreats';
     case 'retreats': return 'builds';
-    case 'builds': return 'complete';
-    case 'complete': return 'research';
+    case 'builds': return 'research';
+    case 'research': return 'orders';
   }
 }
 
@@ -361,6 +360,10 @@ export function applyBuilds(state: GameState): GameState {
   const territories = { ...state.territories };
   const economy = { ...state.economy };
   let counter = 0;
+  // The builds are applied one after another, so the free supply centre
+  // slots and the costs have to be calculated with the builds that were
+  // already applied - two armies in the same turn are not both free.
+  const applied: BuildAction[] = [];
 
   for (const action of state.builds) {
     const power = action.power;
@@ -371,7 +374,7 @@ export function applyBuilds(state: GameState): GameState {
         const id = `${power}_${action.kind}_${++counter}_t${state.turn}`;
         // A unit that is not covered by a free supply centre slot was paid
         // for with economic points and may be kept without a supply centre.
-        const paid = freeSupplySlots(state, power) <= 0;
+        const paid = freeSupplySlots(state, power, applied) <= 0;
         units.push({
           id,
           power,
@@ -415,9 +418,10 @@ export function applyBuilds(state: GameState): GameState {
     }
     const current = economy[power];
     if (current) {
-      const validation = validateBuild(state, action, state.builds);
+      const validation = validateBuild(state, action, applied);
       economy[power] = { ...current, eco: Math.max(0, current.eco - validation.cost) };
     }
+    applied.push(action);
   }
 
   return { ...state, units, territories, economy, builds: [] };
@@ -463,7 +467,44 @@ export function advanceTurn(state: GameState): GameState {
     results: [],
     builds: [],
     economy,
+    incomeTurn: undefined,
   };
+}
+
+/**
+ * Collects the trade income of the turn (rules 4.7). The income is only
+ * counted once per turn - the game master may walk back and forth between
+ * the steps without earning the income twice.
+ */
+export function collectIncome(state: GameState): GameState {
+  if (state.incomeTurn === state.turn) return state;
+
+  // A caravan that travelled this turn is "in transit" and earns nothing.
+  const moved = new Set(
+    state.orders
+      .filter((o) => o.type === 'move' || o.type === 'trade')
+      .map((o) => o.unitId)
+  );
+  for (const unit of state.units) {
+    if (unit.originTerritoryId && unit.originTerritoryId !== unit.territoryId) {
+      moved.add(unit.id);
+    }
+  }
+
+  const income = calculateIncome(state, state.units, moved);
+  // The income goes into the ledger first, the supply centre count is
+  // refreshed afterwards - it must not overwrite the new eco points.
+  const withIncome = applyIncome(state, income);
+  const economy = { ...withIncome.economy };
+  for (const power of ALL_POWERS) {
+    const current = economy[power];
+    if (!current) continue;
+    economy[power] = {
+      ...current,
+      supplyCenters: ownedSupplyCenters(state, power).length,
+    };
+  }
+  return { ...withIncome, economy, incomeTurn: state.turn };
 }
 
 /** Replaces the orders of a single unit. */

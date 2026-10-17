@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react';
-import { GameState, PowerId, ResearchTopic, RESEARCH_TOPIC_LABEL } from '../types/game';
+import { GameState, PowerId } from '../types/game';
 import { POWER_COLORS } from '../data/mapConfig';
 import { ALL_POWERS } from '../engine/economy';
 import { ownedSupplyCenters } from '../engine/gameState';
 import { adjustEco, adjustPoints } from '../engine/economy';
-import { applyResearch, researchBonus } from '../engine/research';
 import { collectStats } from '../io/boardExport';
 
 interface AdminPanelProps {
@@ -52,24 +51,10 @@ export function AdminPanel({
   onSupplyCentrePower,
 }: AdminPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [tab, setTab] = useState<'research' | 'ledger' | 'map' | 'files'>('research');
-  const [scores, setScores] = useState<Record<string, string>>({});
-  const [topics, setTopics] = useState<Record<string, ResearchTopic>>({});
+  const [tab, setTab] = useState<'ledger' | 'map' | 'files'>('ledger');
   const [ecoDelta, setEcoDelta] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState<string | null>(null);
 
   const stats = collectStats(gameState);
-
-  const applyScore = (power: PowerId) => {
-    const raw = scores[power] ?? '0';
-    const score = Math.max(0, Math.min(100, Math.round(Number(raw) || 0)));
-    const topic = topics[power] ?? 'economic';
-    onChange(applyResearch(gameState, power, score, topic));
-    setMessage(
-      `${POWER_NAME[power]}: score ${score} -> +${researchBonus(score)} ${topic} point(s)`
-    );
-    setScores((prev) => ({ ...prev, [power]: String(score) }));
-  };
 
   const changeEco = (power: PowerId, delta: number) => {
     onChange(adjustEco(gameState, power, delta));
@@ -79,64 +64,16 @@ export function AdminPanel({
     <div className="admin-panel">
       <h3>Game Master</h3>
       <div className="admin-tabs">
-        {(['research', 'ledger', 'map', 'files'] as const).map((entry) => (
+        {(['ledger', 'map', 'files'] as const).map((entry) => (
           <button
             key={entry}
             className={`chip ${tab === entry ? 'active' : ''}`}
             onClick={() => setTab(entry)}
           >
-            {entry === 'map' ? 'Supply centres' : entry === 'files' ? 'Files' : entry}
+            {entry === 'map' ? 'Supply centres' : entry === 'files' ? 'Files' : 'Ledger'}
           </button>
         ))}
       </div>
-
-      {message && <p className="hint">{message}</p>}
-
-      {tab === 'research' && (
-        <div className="admin-section">
-          <p className="hint">
-            Score the research each player submitted (0-100). The bonus goes to
-            the ledger that matches the topic.
-          </p>
-          {ALL_POWERS.map((power) => {
-            const entry = gameState.researchScores[power];
-            const economy = gameState.economy[power];
-            return (
-              <div key={power} className="admin-row">
-                <span className="admin-power" style={{ color: POWER_COLORS[power] }}>
-                  {POWER_NAME[power]}
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  placeholder="score"
-                  value={scores[power] ?? (entry ? String(entry.score) : '')}
-                  onChange={(e) => setScores((prev) => ({ ...prev, [power]: e.target.value }))}
-                />
-                <select
-                  value={topics[power] ?? entry?.topic ?? 'economic'}
-                  onChange={(e) =>
-                    setTopics((prev) => ({ ...prev, [power]: e.target.value as ResearchTopic }))
-                  }
-                >
-                  {(['military', 'economic', 'diplomatic'] as ResearchTopic[]).map((topic) => (
-                    <option key={topic} value={topic}>
-                      {RESEARCH_TOPIC_LABEL[topic]}
-                    </option>
-                  ))}
-                </select>
-                <button className="chip" onClick={() => applyScore(power)}>
-                  apply
-                </button>
-                <span className="admin-note">
-                  {economy?.researchScore ?? 0} pts
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {tab === 'ledger' && (
         <div className="admin-section">

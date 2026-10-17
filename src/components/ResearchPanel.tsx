@@ -45,12 +45,13 @@ export function ResearchPanel({ gameState, onChange, onContinue }: ResearchPanel
   return (
     <div className="panel research-panel">
       <h3>
-        Research phase - turn {gameState.turn} ({gameState.year} BC)
+        Score research - turn {gameState.turn} ({gameState.year} BC)
       </h3>
       <p className="hint">
         Score the research each player submitted (0-100). 90 or more is worth +3
         points, 75-89 is worth +2, 50-74 is worth +1 and less than 50 is worth
-        nothing. The points go to the ledger that matches the topic.
+        nothing. The points go to the ledger that matches the topic - economic
+        research becomes eco points, which pay for the builds of the next turn.
       </p>
 
       {message && <p className="hint">{message}</p>}
@@ -98,7 +99,7 @@ export function ResearchPanel({ gameState, onChange, onContinue }: ResearchPanel
       </div>
 
       <button className="primary-button" onClick={onContinue}>
-        Continue to orders
+        Continue to the move phase
       </button>
     </div>
   );

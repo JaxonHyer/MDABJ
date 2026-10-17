@@ -755,3 +755,116 @@ body {
   line-height: 1.45;
   white-space: pre;
 }
+
+/* ------------------------------------------------------------------
+   Step navigation - the game master works through the steps of a turn
+   ------------------------------------------------------------------ */
+.step-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  background: #1b1f2b;
+  border: 1px solid #2a2f3d;
+  border-radius: 8px;
+  color: #9aa3b8;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.step:hover {
+  background: #232838;
+  color: #dfe3ee;
+}
+
+.step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #2c3244;
+  color: #c3cadb;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.step-label {
+  flex: 1;
+}
+
+.step.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: #fff;
+}
+
+.step.active .step-index {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.step.done {
+  color: #8fd39d;
+  border-color: #2c4a35;
+}
+
+.step.done .step-index {
+  background: #243b2a;
+  color: #8fd39d;
+}
+
+.step-hint {
+  margin: 0 0 0.6rem;
+  color: #8b93a7;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* The game master tools live in a drawer below the steps */
+.gm-drawer {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #2a2f3d;
+}
+
+.gm-drawer > summary {
+  cursor: pointer;
+  padding: 0.4rem 0;
+  color: #cfd6e6;
+  font-size: 0.9rem;
+  font-weight: 600;
+  list-style: none;
+}
+
+.gm-drawer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.gm-drawer > summary::before {
+  content: '▸ ';
+  color: #7a8399;
+}
+
+.gm-drawer[open] > summary::before {
+  content: '▾ ';
+}

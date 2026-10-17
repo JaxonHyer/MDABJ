@@ -1,18 +1,17 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
-import { GameState, Order, OrderType, Power, PowerId, Unit } from './types/game';
+import { GameState, Order, OrderType, Phase, Power, PowerId, Unit } from './types/game';
 import {
   advanceTurn,
   applyBuilds,
   applyRetreats,
+  collectIncome,
   createInitialState,
-  ownedSupplyCenters,
   refreshSupplyCenters,
   removeDestroyed,
   setSupplyCenter,
 } from './engine/gameState';
 import { adjudicate } from './engine/adjudicator';
-import { ALL_POWERS, applyIncome, calculateIncome } from './engine/economy';
 import { loadPowers, loadTerritories } from './data/gameData';
 import { supportableUnit, upsertOrder, validOrderTargets } from './engine/orders';
 import { MapDisplay } from './components/MapDisplay';
@@ -37,6 +36,41 @@ import {
 
 const POWERS: Power[] = loadPowers();
 
+/** The steps of a turn - the game master works through them in this order. */
+type StepId = 'move' | 'retreats' | 'builds' | 'research';
+
+const STEPS: { id: StepId; label: string; hint: string }[] = [
+  {
+    id: 'move',
+    label: 'Move',
+    hint: 'Write the orders of every power, then adjudicate them.',
+  },
+  {
+    id: 'retreats',
+    label: 'Retreats',
+    hint: 'Every dislodged unit retreats to a free neighbour or is eliminated.',
+  },
+  {
+    id: 'builds',
+    label: 'Build / Disband',
+    hint: 'Spend the eco points: new units, elite upgrades, fortification, disband.',
+  },
+  {
+    id: 'research',
+    label: 'Score research',
+    hint: 'Score the research of every power - the eco points can pay for the builds of the next turn.',
+  },
+];
+
+/** The step the game is currently in. */
+const PHASE_STEP: Record<Phase, StepId> = {
+  orders: 'move',
+  adjudication: 'move',
+  retreats: 'retreats',
+  builds: 'builds',
+  research: 'research',
+};
+
 function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
     const state = createInitialState(POWERS);
@@ -48,7 +82,7 @@ function App() {
   const [orderType, setOrderType] = useState<OrderType>('move');
   const [hoveredTerritoryId, setHoveredTerritoryId] = useState<string | null>(null);
   const [retreats, setRetreats] = useState<Record<string, string | null>>({});
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [activeStep, setActiveStep] = useState<StepId>('move');
   const [supplyCentreMode, setSupplyCentreMode] = useState(false);
   const [supplyCentrePower, setSupplyCentrePower] = useState<PowerId>('athens');
   const [notice, setNotice] = useState<string | null>(null);
@@ -62,6 +96,17 @@ function App() {
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const overlayRef = useRef<SVGSVGElement>(null);
+  /**
+   * The state at the beginning of the turn. The adjudication always starts
+   * from this snapshot, so the game master can go back to the move step,
+   * change an order and adjudicate again.
+   */
+  const turnStartRef = useRef<GameState | null>(null);
+
+  // The turn snapshot is taken whenever the game is in the move step.
+  useEffect(() => {
+    if (gameState.phase === 'orders') turnStartRef.current = gameState;
+  }, [gameState]);
 
   const selectedUnit: Unit | undefined = useMemo(
     () => gameState.units.find((u) => u.id === selectedUnitId),
@@ -141,24 +186,27 @@ function App() {
     [orderType, selectedUnitId, supplyCentreMode, supplyCentrePower]
   );
 
-  const handleContinueToOrders = () => {
+  const handleContinueToMove = () => {
     setGameState((prev) => (prev.phase === 'research' ? { ...prev, phase: 'orders' } : prev));
     setSelectedUnitId(null);
+    setActiveStep('move');
   };
 
   const handleAdjudicate = () => {
-    setGameState((prev) => {
-      const outcome = adjudicate(prev);
-      return {
-        ...prev,
-        units: outcome.units,
-        results: outcome.results,
-        phase: 'retreats',
-        orders: prev.orders,
-      };
-    });
+    // Always adjudicate from the beginning of the turn so that the game
+    // master can change an order and adjudicate again.
+    const base = turnStartRef.current ?? gameState;
+    const outcome = adjudicate({ ...base, orders: gameState.orders });
+    setGameState((prev) => ({
+      ...prev,
+      units: outcome.units,
+      results: outcome.results,
+      phase: 'retreats',
+    }));
     setRetreats({});
     setSelectedUnitId(null);
+    setActiveStep('retreats');
+    setNotice('The orders were adjudicated.');
   };
 
   const handleRetreatChange = (unitId: string, destination: string | null) => {
@@ -166,35 +214,17 @@ function App() {
   };
 
   const handleResolveRetreats = () => {
+    if (gameState.phase === 'orders' || gameState.phase === 'adjudication') {
+      setNotice('Adjudicate the orders before the units can retreat.');
+      return;
+    }
     setGameState((prev) => {
       const withRetreats = applyRetreats(prev, retreats);
       const cleaned = removeDestroyed(withRetreats);
-      // A unit that retreated does not generate income this turn (5.3).
-      const moved = new Set(
-        prev.orders
-          .filter((o) => o.type === 'move' || o.type === 'trade')
-          .map((o) => o.unitId)
-      );
-      for (const unit of cleaned.units) {
-        if (unit.originTerritoryId && unit.originTerritoryId !== unit.territoryId) {
-          moved.add(unit.id);
-        }
-      }
-      const income = calculateIncome(cleaned, cleaned.units, moved);
-      // The income is collected before the build phase (rules 4.7) and counts
-      // towards the wealth of the power.
-      const withIncome = applyIncome(cleaned, income);
-      const economy = { ...withIncome.economy };
-      for (const power of ALL_POWERS) {
-        const current = economy[power];
-        if (!current) continue;
-        economy[power] = {
-          ...current,
-          supplyCenters: ownedSupplyCenters(cleaned, power).length,
-        };
-      }
-      return { ...withIncome, phase: 'builds', economy };
+      // The income is collected before the build phase (rules 4.7).
+      return { ...collectIncome(cleaned), phase: 'builds' };
     });
+    setActiveStep('builds');
   };
 
   const handleBuildsChange = (builds: GameState['builds']) => {
@@ -202,13 +232,24 @@ function App() {
   };
 
   const handleFinishTurn = () => {
+    if (gameState.phase === 'orders' || gameState.phase === 'adjudication') {
+      setNotice('Adjudicate the orders before the turn can end.');
+      return;
+    }
     setGameState((prev) => {
-      const built = applyBuilds(prev);
+      // Pending retreats are applied here as well, in case the game master
+      // went straight to the build step without resolving them.
+      const withRetreats = removeDestroyed(applyRetreats(prev, retreats));
+      // The income is collected here as well in case the game master went
+      // straight to the build step - it is only ever counted once.
+      const withIncome = collectIncome(withRetreats);
+      const built = applyBuilds(withIncome);
       const next = advanceTurn(built);
       return refreshSupplyCenters(next);
     });
     setRetreats({});
     setSelectedUnitId(null);
+    setActiveStep('research');
   };
 
   const handleLoadSave = async (file: File) => {
@@ -290,12 +331,11 @@ function App() {
   };
 
   const phaseLabel = {
-    research: 'Research phase',
-    orders: 'Writing orders',
-    adjudication: 'Adjudication',
+    research: 'Score research',
+    orders: 'Move',
+    adjudication: 'Move',
     retreats: 'Retreats',
-    builds: 'Build phase',
-    complete: 'Turn complete',
+    builds: 'Build / Disband',
   }[gameState.phase];
 
   return (
@@ -307,22 +347,75 @@ function App() {
 
       <div className="app-content">
         <aside className="sidebar">
-          <div className="sidebar-tabs">
-            <button
-              className={`chip ${adminOpen ? '' : 'active'}`}
-              onClick={() => setAdminOpen(false)}
-            >
-              Play
-            </button>
-            <button
-              className={`chip ${adminOpen ? 'active' : ''}`}
-              onClick={() => setAdminOpen(true)}
-            >
-              Game master
-            </button>
+          <nav className="step-nav">
+            {STEPS.map((step, index) => {
+              const state =
+                activeStep === step.id
+                  ? 'active'
+                  : STEPS.findIndex((s) => s.id === PHASE_STEP[gameState.phase]) > index
+                    ? 'done'
+                    : 'todo';
+              return (
+                <button
+                  key={step.id}
+                  className={`step ${state}`}
+                  onClick={() => setActiveStep(step.id)}
+                >
+                  <span className="step-index">{index + 1}</span>
+                  <span className="step-label">{step.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+          <p className="step-hint">
+            {STEPS.find((s) => s.id === activeStep)?.hint}
+          </p>
+
+          <div className="step-body">
+            {activeStep === 'move' && (
+              <>
+                <PowerSelector
+                  powers={POWERS}
+                  selectedPower={selectedPower}
+                  onSelect={handlePowerSelect}
+                />
+                <OrderPanel
+                  gameState={gameState}
+                  selectedUnitId={selectedUnitId}
+                  orderType={orderType}
+                  onSelectUnit={setSelectedUnitId}
+                  onSelectOrderType={setOrderType}
+                  onOrdersChange={handleOrdersChange}
+                  onAdjudicate={handleAdjudicate}
+                />
+              </>
+            )}
+            {activeStep === 'retreats' && (
+              <RetreatPanel
+                gameState={gameState}
+                retreats={retreats}
+                onRetreatChange={handleRetreatChange}
+                onConfirm={handleResolveRetreats}
+              />
+            )}
+            {activeStep === 'builds' && (
+              <BuildPanel
+                gameState={gameState}
+                onBuildsChange={handleBuildsChange}
+                onFinishTurn={handleFinishTurn}
+              />
+            )}
+            {activeStep === 'research' && (
+              <ResearchPanel
+                gameState={gameState}
+                onChange={setGameState}
+                onContinue={handleContinueToMove}
+              />
+            )}
           </div>
 
-          {adminOpen ? (
+          <details className="gm-drawer">
+            <summary>Game master tools</summary>
             <AdminPanel
               gameState={gameState}
               onChange={setGameState}
@@ -338,56 +431,7 @@ function App() {
               supplyCentrePower={supplyCentrePower}
               onSupplyCentrePower={setSupplyCentrePower}
             />
-          ) : (
-            <>
-              {gameState.phase !== 'research' && (
-                <PowerSelector
-                  powers={POWERS}
-                  selectedPower={selectedPower}
-                  onSelect={handlePowerSelect}
-                />
-              )}
-
-              {gameState.phase === 'research' ? (
-                <ResearchPanel
-                  gameState={gameState}
-                  onChange={setGameState}
-                  onContinue={handleContinueToOrders}
-                />
-              ) : gameState.phase === 'orders' ? (
-                <OrderPanel
-                  gameState={gameState}
-                  selectedUnitId={selectedUnitId}
-                  orderType={orderType}
-                  onSelectUnit={setSelectedUnitId}
-                  onSelectOrderType={setOrderType}
-                  onOrdersChange={handleOrdersChange}
-                  onAdjudicate={handleAdjudicate}
-                />
-              ) : gameState.phase === 'retreats' ? (
-                <RetreatPanel
-                  gameState={gameState}
-                  retreats={retreats}
-                  onRetreatChange={handleRetreatChange}
-                  onConfirm={handleResolveRetreats}
-                />
-              ) : gameState.phase === 'builds' ? (
-                <BuildPanel
-                  gameState={gameState}
-                  onBuildsChange={handleBuildsChange}
-                  onFinishTurn={handleFinishTurn}
-                />
-              ) : (
-                <div className="phase-panel">
-                  <h3>{phaseLabel}</h3>
-                  <p className="hint">The turn is finished. Start the next turn below.</p>
-                  <button className="primary-button" onClick={handleFinishTurn}>
-                    Start next turn
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+          </details>
         </aside>
 
         <main className="main-content">

@@ -14,13 +14,22 @@ export type UnitType = 'army' | 'fleet' | 'caravan';
 
 export type TerritoryType = 'land' | 'sea' | 'coastal';
 
+/**
+ * The steps of a turn. The game master works through them in this order:
+ *
+ *   1. orders      - the moves of all powers
+ *   2. adjudication - the orders are resolved
+ *   3. retreats    - the dislodged units retreat
+ *   4. builds      - build, upgrade, fortify, disband
+ *   5. research    - the research of the turn is scored (eco points for the
+ *                    build phase of the next turn)
+ */
 export type Phase =
-  | 'research'     // Scoring the research of the turn (rules 4.1)
   | 'orders'       // Writing movement orders
   | 'adjudication' // Resolving orders
   | 'retreats'     // Dislodged units retreat
   | 'builds'       // Build/disband units
-  | 'complete';    // Turn complete
+  | 'research';    // Scoring the research of the turn
 
 export type OrderType =
   | 'hold'
@@ -140,6 +149,8 @@ export interface GameState {
   scOwners: Record<string, PowerId>;
   /** Research score of the current turn, per power (0 = not scored yet). */
   researchScores: Partial<Record<PowerId, { score: number; topic: ResearchTopic }>>;
+  /** The turn the income was collected for - the income is only counted once. */
+  incomeTurn?: number;
   /** Free form notes the game master keeps with the save file. */
   notes?: string;
 }
