@@ -6,11 +6,14 @@ import { applyResearch } from '../engine/research';
 describe('turn report', () => {
   it('lists the turn, the supply centres, the research and the standing', () => {
     const state = applyResearch(
-      makeState(
-        [unit('athens', 'army', 'athens'), unit('athens', 'caravan', 'piraeus')],
-        [],
-        { athens: 4 }
-      ),
+      {
+        ...makeState(
+          [unit('athens', 'army', 'athens'), unit('athens', 'caravan', 'piraeus')],
+          [],
+          { athens: 4 }
+        ),
+        phase: 'research',
+      },
       'athens',
       7,
       'economic'

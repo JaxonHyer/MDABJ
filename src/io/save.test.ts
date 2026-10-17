@@ -7,7 +7,7 @@ import { applyResearch } from '../engine/research';
 describe('save files', () => {
   it('round trips a game state', () => {
     const state = applyResearch(
-      makeState([unit('athens', 'army', 'athens')], [], { athens: 4 }),
+      { ...makeState([unit('athens', 'army', 'athens')], [], { athens: 4 }), phase: 'research' },
       'athens',
       6,
       'economic'

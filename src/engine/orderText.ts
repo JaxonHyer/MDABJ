@@ -104,7 +104,11 @@ function normalizeName(value: string): string {
 }
 
 function stripLeadingPunctuation(value: string): string {
-  return value.replace(/^[\s,;:.()[\]]+/, '').trim();
+  const text = value.trim();
+  // Keep the move arrow intact, but accept common form-style separators like
+  // "A Athens - moves to Corinth" and "F Rhodes - hold".
+  if (text.startsWith('->')) return text;
+  return text.replace(/^[\s,;:.()[\]]+/, '').replace(/^-+\s*/, '').trim();
 }
 
 function stripTrailingPunctuation(value: string): string {
@@ -318,10 +322,11 @@ function parseMoveTarget(
   state: GameState,
   allowBareTarget = false
 ): { target?: string; viaConvoy?: boolean; error?: string } {
-  let text = stripLeadingPunctuation(normalizeInput(value));
-  let actionRemoved = false;
+  const normalized = normalizeInput(value).trim();
+  let actionRemoved = /^-(?!>)\s*/.test(normalized);
+  let text = stripLeadingPunctuation(normalized);
   const actionPrefixes = [
-    /^(?:->\s*|-)\s*/i,
+    /^->\s*/i,
     /^(?:to|into)\s+/i,
     /^(?:move|moves|go|goes|advance|advances)(?:\s+to)?\s+/i,
   ];
@@ -371,7 +376,9 @@ function parseOrderLine(
   if (!primary.result) return { error: primary.error };
 
   const unit = primary.result.unit;
-  let action = stripLeadingPunctuation(primary.result.rest);
+  const rawAction = primary.result.rest.trim();
+  const hasDashMoveSeparator = /^-(?!>)/.test(rawAction);
+  const action = stripLeadingPunctuation(rawAction);
   if (!action) {
     return { error: 'Add an action: hold, move, support, convoy, or trade.' };
   }
@@ -487,7 +494,7 @@ function parseOrderLine(
     };
   }
 
-  const destination = parseMoveTarget(action, state);
+  const destination = parseMoveTarget(action, state, hasDashMoveSeparator);
   if (!destination.target) {
     return {
       error:

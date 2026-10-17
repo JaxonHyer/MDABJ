@@ -27,6 +27,7 @@ src/
     research.ts          # Research score input validation and reward bands (0-7 -> +0 to +3)
     orders.ts            # Legal order targets, support helpers
     orderText.ts         # Case/spacing-tolerant order text parsing and validation
+    turnSnapshot.ts     # Safe turn-start unit state for re-adjudication
     testHelpers.ts       # makeState()/unit()/order() builders for tests
   types/
     game.ts              # PowerId, UnitType, Phase, Territory, Unit, Order, Economy, GameState
@@ -76,15 +77,17 @@ scripts/
 6. **Economy**: trade-node income (caravan = full, military = half floored, blockaded caravan = 0),
    banking cap 15, wealth = cumulative eco, research bonuses into eco/military/diplomatic ledgers.
 7. **Four-step turn UI**: the sidebar shows the steps **1 Move → 2 Retreats → 3 Build / Disband →
-   4 Score research** with a short hint per step. The GM may jump between the steps freely; every
-   step reads the same state, so nothing is lost. The game master tools (ledger, supply centres,
-   files, exports) live in a collapsible *Game master tools* drawer at the bottom of the sidebar.
+   4 Score research** with a short hint per step. The GM may navigate between steps freely, but
+   phase-changing actions are enabled only in their proper phase to prevent skipping work or
+   collecting income early. The game master tools (ledger, supply centres, files, exports) live in a
+   collapsible *Game master tools* drawer at the bottom of the sidebar.
 8. **Turn order**: Move (orders + adjudication) → Retreats → Build/Disband → Score research → Move.
    The engine phase machine is `orders → adjudication → retreats → builds → research → orders`;
    `createInitialState()` starts in `orders`, `advanceTurn()` ends in `research`.
-9. **Re-adjudication is safe**: the GM can go back to step 1, change an order and adjudicate again.
-   The adjudication always starts from the snapshot of the beginning of the turn (`turnStartRef`),
-   so a unit is never moved twice.
+9. **Re-adjudication is safe before retreats are resolved**: the GM can return to step 1 during the
+   Retreats step, change an order and adjudicate again from the turn-start snapshot. Order editing is
+   locked once retreats and income are resolved. A save loaded after adjudication has no in-memory
+   turn-start snapshot, so re-adjudication is disabled rather than risking moving units twice.
 10. **Income is collected exactly once per turn**: `collectIncome(state)` is guarded by `state.incomeTurn`.
     It is called when the retreats are resolved and again when the turn is finished - the second call
     is a no-op. The income is added to the ledger **before** the supply centre count is refreshed.
@@ -98,12 +101,13 @@ scripts/
     `src/data/territoryFillPaths.ts` contains the map-aligned province geometry.
 13. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG, with a *Cities* column),
     Turn report (txt, with a *CITIES* section).
-14. **Tests**: 130 vitest cases across adjudication, order text parsing, game state, research,
+14. **Tests**: 137 vitest cases across adjudication, order text parsing, turn snapshots, game state, research,
     save/load, turn report, DATC-style edge cases, map data and occupied-province fills. `npm run build`
     succeeds and includes the TypeScript check.
 
 ### ⚠️ Known Gaps
 
+- `npm run lint` is currently unavailable because the repository has no ESLint configuration.
 - **Diplomacy (negotiation) phase** is not modelled - the rules mark it as table talk, only the result matters.
 - **Policy phase** is inactive in this ruleset and is not implemented.
 - **Caravan vs. hostile caravan** (both eliminated, +1 eco to the attacker) is *not* implemented: the rules
@@ -254,7 +258,7 @@ npm install
 npm run dev          # dev server
 npm run build        # production build -> dist/
 npm run preview      # serve the build
-npm test             # vitest (130 cases)
+npm test             # vitest (137 cases)
 npx tsc --noEmit     # type check
 npm run map:extract  # regenerate territoryPositions.ts from map.svg
 ```

@@ -74,6 +74,7 @@ export function ResearchPanel({
   onContinue,
 }: ResearchPanelProps) {
   const [reviewing, setReviewing] = useState(false);
+  const [reviewedSignature, setReviewedSignature] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     return ALL_POWERS.map((power): ScoreRow | null => {
@@ -114,6 +115,9 @@ export function ResearchPanel({
       };
     });
   }, [allScoresValid, gameState.economy, validRows]);
+  const reviewSignature = JSON.stringify(awards);
+  const canApplyReviewedBatch =
+    reviewing && allScoresValid && reviewedSignature === reviewSignature;
 
   const updateDraft = (power: PowerId, update: Partial<ResearchDraft>) => {
     onDraftsChange({
@@ -123,7 +127,7 @@ export function ResearchPanel({
   };
 
   const handleApply = () => {
-    if (!allScoresValid) return;
+    if (!canApplyReviewedBatch) return;
     const submissions = ALL_POWERS.map((power) => ({
       power,
       score: Number(drafts[power].score),
@@ -163,6 +167,25 @@ export function ResearchPanel({
           })}
         </div>
         <button className="primary-button" onClick={onContinue}>
+          Return to Move
+        </button>
+      </div>
+    );
+  }
+
+  if (gameState.phase !== 'research') {
+    const phaseInstruction = {
+      orders: 'Adjudicate orders before scoring research.',
+      adjudication: 'Finish adjudication before scoring research.',
+      retreats: 'Resolve retreats and collect eco before scoring research.',
+      builds: 'Finish Build / Disband to begin the research phase.',
+      research: '',
+    }[gameState.phase];
+    return (
+      <div className="panel phase-panel research-panel">
+        <h3>Research is not ready yet</h3>
+        <p className="hint">{phaseInstruction} The research batch can only be applied in its proper turn phase.</p>
+        <button className="secondary-button" onClick={onContinue}>
           Return to Move
         </button>
       </div>
@@ -239,7 +262,10 @@ export function ResearchPanel({
           <button
             className="primary-button"
             disabled={!allScoresValid}
-            onClick={() => setReviewing(true)}
+            onClick={() => {
+              setReviewedSignature(reviewSignature);
+              setReviewing(true);
+            }}
           >
             Review all {ALL_POWERS.length} research scores
           </button>
@@ -285,11 +311,26 @@ export function ResearchPanel({
               </table>
             </div>
           </div>
+          {reviewedSignature !== null && reviewedSignature !== reviewSignature && (
+            <p className="hint danger-text" role="alert">
+              The ledger changed after review. Return to entry and review the updated preview before applying.
+            </p>
+          )}
           <div className="research-review-actions">
-            <button className="secondary-button" onClick={() => setReviewing(false)}>
+            <button
+              className="secondary-button"
+              onClick={() => {
+                setReviewing(false);
+                setReviewedSignature(null);
+              }}
+            >
               Edit scores
             </button>
-            <button className="primary-button" onClick={handleApply}>
+            <button
+              className="primary-button"
+              disabled={!canApplyReviewedBatch}
+              onClick={handleApply}
+            >
               Apply all scores &amp; continue to Move
             </button>
           </div>

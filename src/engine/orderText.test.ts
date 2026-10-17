@@ -22,6 +22,24 @@ describe('parseOrderText', () => {
     ]);
   });
 
+  it('accepts form-style dash separators and natural move/hold wording', () => {
+    const army = unit('athens', 'army', 'athens');
+    const fleet = unit('athens', 'fleet', 'rhodes');
+    const caravan = unit('athens', 'caravan', 'piraeus');
+    const parsed = parseOrderText(
+      'ATHENS - Army in Athens - moves to Corinth\nF Rhodes - holds\nC Piraeus - trade Corinth',
+      makeState([army, fleet, caravan]),
+      null,
+    );
+
+    expect(parsed.errorCount).toBe(0);
+    expect(parsed.updates).toEqual([
+      { unitId: army.id, type: 'move', target: 'corinth' },
+      { unitId: fleet.id, type: 'hold' },
+      { unitId: caravan.id, type: 'trade', target: 'corinth' },
+    ]);
+  });
+
   it('accepts power headings and prefixes when no default power is selected', () => {
     const athensArmy = unit('athens', 'army', 'athens');
     const romeArmy = unit('rome', 'army', 'rome');

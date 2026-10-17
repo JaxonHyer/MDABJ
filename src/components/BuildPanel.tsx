@@ -32,6 +32,22 @@ const ALL_POWERS: PowerId[] = [
 export function BuildPanel({ gameState, onBuildsChange, onFinishTurn }: BuildPanelProps) {
   const [power, setPower] = useState<PowerId>(gameState.activePower ?? 'athens');
 
+  if (gameState.phase !== 'builds') {
+    const phaseHint = {
+      orders: 'Adjudicate orders before entering builds.',
+      adjudication: 'Finish adjudication and retreats before building.',
+      retreats: 'Resolve retreats and collect eco before entering builds.',
+      builds: '',
+      research: 'This turn has already ended. Finish research before returning to Move.',
+    }[gameState.phase];
+    return (
+      <div className="phase-panel">
+        <h3>Build / Disband is not active</h3>
+        <p className="hint">{phaseHint}</p>
+      </div>
+    );
+  }
+
   const pending = gameState.builds.filter((b) => b.power === power);
   const eco = gameState.economy[power]?.eco ?? 0;
   const cost = pendingBuildCost(gameState, power);

@@ -6,6 +6,7 @@ import { UNIT_GLYPH, UNIT_LABEL } from '../types/game';
 
 interface OrderPanelProps {
   gameState: GameState;
+  canEditOrders: boolean;
   orderText: string;
   onOrderTextChange: (text: string) => void;
   selectedUnitId: string | null;
@@ -27,6 +28,7 @@ const ORDER_TYPES: { value: OrderType; label: string }[] = [
 
 export function OrderPanel({
   gameState,
+  canEditOrders,
   orderText,
   onOrderTextChange,
   selectedUnitId,
@@ -37,6 +39,7 @@ export function OrderPanel({
   onAdjudicate,
 }: OrderPanelProps) {
   const [reviewing, setReviewing] = useState(false);
+  const [reviewedSignature, setReviewedSignature] = useState<string | null>(null);
   const [appliedMessage, setAppliedMessage] = useState<string | null>(null);
 
   const powerUnits = useMemo(
@@ -57,14 +60,17 @@ export function OrderPanel({
         : null,
     [orderText, gameState, gameState.activePower]
   );
+  const parseSignature = parseResult ? JSON.stringify(parseResult) : '';
   const parsedLines = parseResult?.entries.filter((entry) => !entry.isHeader) ?? [];
   const canReview = Boolean(
-    parseResult && parseResult.parsedCount > 0 && parseResult.errorCount === 0
+    canEditOrders && parseResult && parseResult.parsedCount > 0 && parseResult.errorCount === 0
   );
-  const canApply = reviewing && canReview && Boolean(parseResult);
+  const canApply =
+    reviewing && canReview && Boolean(parseResult) && reviewedSignature === parseSignature;
   const hasPendingOrderText = Boolean(orderText.trim());
 
   const handleOrderTypeChange = (unitId: string, type: OrderType) => {
+    if (!canEditOrders) return;
     const order = orderByUnit.get(unitId);
     const next: Order = { unitId, type };
     if (type === 'support_hold' || type === 'support_move' || type === 'transport') {
@@ -80,6 +86,7 @@ export function OrderPanel({
   };
 
   const handleTargetChange = (unitId: string, target: string) => {
+    if (!canEditOrders) return;
     const order = orderByUnit.get(unitId);
     if (!order) return;
     const next = { ...order, target };
@@ -114,7 +121,7 @@ export function OrderPanel({
   };
 
   const applyParsedOrders = () => {
-    if (!canApply || !parseResult) return;
+    if (!canEditOrders || !canApply || !parseResult) return;
     const nextByUnit = new Map(gameState.orders.map((order) => [order.unitId, order]));
     for (const order of parseResult.updates) nextByUnit.set(order.unitId, order);
     onOrdersChange([...nextByUnit.values()]);
@@ -123,10 +130,11 @@ export function OrderPanel({
     );
     onOrderTextChange('');
     setReviewing(false);
+    setReviewedSignature(null);
   };
 
   const hasLivingUnits = gameState.units.some((unit) => !unit.destroyed);
-  const canAdjudicate = hasLivingUnits && !hasPendingOrderText;
+  const canAdjudicate = canEditOrders && hasLivingUnits && !hasPendingOrderText;
 
   return (
     <div className="order-panel">
@@ -144,16 +152,28 @@ export function OrderPanel({
           <code>F Rhodes hold</code>
           <code>A Corinth support A Athens</code>
         </p>
+        {!canEditOrders && (
+          <p className="hint danger-text" role="status">
+            {gameState.phase === 'research'
+              ? gameState.researchScoresTurn === gameState.turn
+                ? 'Research is already scored. Return from the Research step to begin this turn’s orders.'
+                : 'Research is pending. Apply the research batch and continue to Move before entering this turn’s orders.'
+              : gameState.phase === 'builds'
+                ? 'Order changes are locked after retreats and income have been resolved for this turn.'
+                : 'This save has no turn-start snapshot, so order edits and re-adjudication are disabled to prevent moving units twice.'}
+          </p>
+        )}
         <textarea
           aria-label="Paste movement orders"
           rows={5}
           spellCheck={false}
-          readOnly={reviewing}
+          readOnly={reviewing || !canEditOrders}
           placeholder={'Athens:\nA Athens -> Corinth\nF Rhodes hold\n\nSparta:\nA Sparta hold'}
           value={orderText}
           onChange={(event) => {
             onOrderTextChange(event.target.value);
             setReviewing(false);
+            setReviewedSignature(null);
             setAppliedMessage(null);
           }}
         />
@@ -197,8 +217,19 @@ export function OrderPanel({
                   Review the parsed orders above. Applying replaces orders for the listed units only;
                   all other current orders stay in place.
                 </p>
+                {reviewedSignature !== null && reviewedSignature !== parseSignature && (
+                  <p className="hint danger-text" role="alert">
+                    The preview changed after review. Go back and review the current orders before applying.
+                  </p>
+                )}
                 <div className="button-row">
-                  <button className="secondary-button" onClick={() => setReviewing(false)}>
+                  <button
+                    className="secondary-button"
+                    onClick={() => {
+                      setReviewing(false);
+                      setReviewedSignature(null);
+                    }}
+                  >
                     Back to edit
                   </button>
                   <button className="primary-button" disabled={!canApply} onClick={applyParsedOrders}>
@@ -211,7 +242,10 @@ export function OrderPanel({
                 <button
                   className="primary-button"
                   disabled={!canReview}
-                  onClick={() => setReviewing(true)}
+                  onClick={() => {
+                    setReviewedSignature(parseSignature);
+                    setReviewing(true);
+                  }}
                 >
                   Review {parseResult?.parsedCount ?? 0} parsed order{parseResult?.parsedCount === 1 ? '' : 's'}
                 </button>
@@ -250,7 +284,7 @@ export function OrderPanel({
             <div
               key={unit.id}
               className={`unit-order ${isSelected ? 'selected' : ''}`}
-              onClick={() => onSelectUnit(isSelected ? null : unit.id)}
+              onClick={() => canEditOrders && onSelectUnit(isSelected ? null : unit.id)}
             >
               <div className="unit-order-head">
                 <span className="unit-badge" data-power={unit.power}>
@@ -269,6 +303,7 @@ export function OrderPanel({
               {isSelected && (
                 <div className="unit-order-body">
                   <select
+                    disabled={!canEditOrders}
                     value={currentType}
                     onClick={(event) => event.stopPropagation()}
                     onChange={(event) => handleOrderTypeChange(unit.id, event.target.value as OrderType)}
@@ -282,6 +317,7 @@ export function OrderPanel({
 
                   {currentType !== 'hold' && (
                     <select
+                      disabled={!canEditOrders}
                       value={order?.target ?? ''}
                       onClick={(event) => event.stopPropagation()}
                       onChange={(event) => handleTargetChange(unit.id, event.target.value)}
@@ -298,6 +334,7 @@ export function OrderPanel({
                   {unit.type === 'army' && currentType === 'move' && (
                     <label className="checkbox">
                       <input
+                        disabled={!canEditOrders}
                         type="checkbox"
                         checked={order?.viaConvoy ?? false}
                         onClick={(event) => event.stopPropagation()}

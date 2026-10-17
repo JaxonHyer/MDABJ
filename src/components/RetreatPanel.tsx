@@ -27,6 +27,22 @@ export function RetreatPanel({
     [gameState.units]
   );
 
+  if (gameState.phase !== 'retreats') {
+    const phaseHint = {
+      orders: 'Adjudicate orders before resolving retreats.',
+      adjudication: 'Finish adjudication before resolving retreats.',
+      retreats: '',
+      builds: 'Retreats are already resolved. Continue to Build / Disband.',
+      research: 'The turn has advanced. Finish research before returning to Move.',
+    }[gameState.phase];
+    return (
+      <div className="phase-panel">
+        <h3>Retreat Phase is not active</h3>
+        <p className="hint">{phaseHint}</p>
+      </div>
+    );
+  }
+
   if (dislodged.length === 0) {
     return (
       <div className="phase-panel">

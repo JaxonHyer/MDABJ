@@ -60,6 +60,7 @@ export function applyResearch(
   score: number,
   topic: ResearchTopic
 ): GameState {
+  assertResearchPhase(state);
   if (state.researchScoresTurn === state.turn) {
     throw new Error(`Research for turn ${state.turn} has already been applied.`);
   }
@@ -74,6 +75,7 @@ export function applyResearchBatch(
   state: GameState,
   submissions: ResearchSubmission[]
 ): GameState {
+  assertResearchPhase(state);
   if (state.researchScoresTurn === state.turn) {
     throw new Error(`Research for turn ${state.turn} has already been applied.`);
   }
@@ -105,6 +107,12 @@ export function applyResearchBatch(
     next = applyResearchScore(next, submission.power, submission.score, submission.topic);
   }
   return { ...next, researchScoresTurn: state.turn };
+}
+
+function assertResearchPhase(state: GameState): void {
+  if (state.phase !== 'research') {
+    throw new Error(`Research can only be applied during the research phase (current phase: ${state.phase}).`);
+  }
 }
 
 function applyResearchScore(
