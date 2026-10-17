@@ -41,4 +41,6 @@ src/
 
 ### Mare Nostrum Rules
 
-See `mare_nostrum/rules.pdf` for the complete ruleset.
+See 
+[mare_nostrum/rules.pdf](./mare_nostrum/rules.pdf)
+for the complete ruleset.
