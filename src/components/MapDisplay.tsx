@@ -7,6 +7,7 @@ import {
   TERRITORY_POSITIONS,
 } from '../data/territoryPositions';
 import { measureLabel, provinceAnchor, unitSlot, type Point } from '../data/mapLayout';
+import { getOccupiedProvinceFills } from '../data/occupiedProvinceFills';
 import {
   MAP_VIEWBOX,
   MAP_WIDTH,
@@ -413,6 +414,11 @@ export function MapDisplay({
     return markers;
   }, [gameState.territories, gameState.units]);
 
+  const occupiedProvinceFills = useMemo(
+    () => getOccupiedProvinceFills(gameState),
+    [gameState.territories, gameState.units]
+  );
+
   const unitCount = gameState.units.filter((u) => !u.destroyed).length;
 
   return (
@@ -435,6 +441,19 @@ export function MapDisplay({
           onTerritoryHover(null);
         }}
       >
+        {/* Tint each occupied supply centre or city across its full province. */}
+        <g className="map-province-fills" pointerEvents="none">
+          {occupiedProvinceFills.map((fill) => (
+            <path
+              key={`occupied-province-${fill.territoryId}`}
+              d={fill.path}
+              fill={fill.color}
+              fillOpacity={0.38}
+              stroke="none"
+            />
+          ))}
+        </g>
+
         {/* Province highlights */}
         <g className="map-highlights">
           {validTargets.map((id) => {
@@ -691,6 +710,7 @@ export function MapDisplay({
           <span>
             {hovered.type === 'sea' ? 'Sea zone' : hovered.type === 'coastal' ? 'Coastal' : 'Land'}
             {hovered.isSupplyCenter ? ' • Supply centre' : ''}
+            {hovered.isCity ? ' • City (sustains a unit)' : ''}
             {hovered.isTradeNode ? ` • Trade node (${hovered.tradeNodeValue} eco)` : ''}
             {hovered.fortified ? ' • Fortified' : ''}
           </span>

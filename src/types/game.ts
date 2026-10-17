@@ -50,6 +50,12 @@ export interface Territory {
   isSupplyCenter: boolean;
   homePower?: PowerId;      // Which power this is a home center for (or null)
   isTradeNode: boolean;
+  /**
+   * A city - the small black dot of the printed map. A city can sustain one
+   * unit of the power that occupies it (like a supply centre), but no unit
+   * can be built in it (rules 2.2 / 3.3).
+   */
+  isCity?: boolean;
   tradeNodeValue?: number;  // Eco points per turn (if trade node)
   tradeRoutes?: string[];   // IDs of connected trade nodes (for caravans)
   fortified?: boolean;      // Section 5.4 - defending unit gets +1
@@ -70,9 +76,9 @@ export interface Unit {
   /** Province the unit came from this turn - used to draw the move arrow. */
   originTerritoryId?: string;
   /**
-   * The unit was paid for with economic points instead of a supply centre
-   * slot (rules 3.3). Such a unit may be kept even when the power holds
-   * fewer supply centres than it has units.
+   * The unit was paid for with economic points instead of a supply-centre
+   * or occupied-city slot (rules 3.3 and the city-sustains rule). Such a unit
+   * may be kept in addition to the power's other sustaining capacity.
    */
   bought?: boolean;
 }

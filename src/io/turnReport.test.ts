@@ -27,6 +27,20 @@ describe('turn report', () => {
     expect(report).toMatch(/A Athens, C Piraeus/);
   });
 
+  it('lists the cities a power occupies', () => {
+    const state = makeState([
+      unit('athens', 'army', 'athens'),
+      unit('athens', 'army', 'delphi'),
+    ]);
+
+    const report = buildTurnReport(state);
+
+    expect(report).toMatch(/CITIES/);
+    expect(report).toMatch(/Athens\s+Delphi/);
+    // The standing table has a column for the cities.
+    expect(report).toMatch(/Power\s+Eco\s+Mil\s+Dip\s+Research\s+SC\s+City\s+Units\s+Wealth/);
+  });
+
   it('names the file after the turn and the year', () => {
     const state = makeState([]);
     expect(turnReportFileName(state)).toBe('mare-nostrum-turn1-350bc-report.txt');

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BuildAction, GameState, PowerId, Unit, UNIT_GLYPH } from '../types/game';
 import {
+  applyBuilds,
   buildableHomeCenters,
   eliteUnitCount,
   occupiedTradeNodes,
@@ -37,17 +38,13 @@ export function BuildPanel({ gameState, onBuildsChange, onFinishTurn }: BuildPan
   const remaining = eco - cost;
 
   const units = gameState.units.filter((u) => u.power === power && !u.destroyed);
-  const limit = unitLimit(gameState, power);
-  const military = limit.units;
+  // Project the queued actions so paid builds, disbands and cities occupied
+  // by a newly placed caravan are reflected in the final unit allowance.
+  const projectedState = applyBuilds({ ...gameState, builds: pending });
+  const limit = unitLimit(projectedState, power);
+  const effectiveUnits = limit.units;
   const supplyCenters = limit.supplyCenters;
   const maxUnits = limit.max;
-
-  // Units that are built or disbanded in this phase count immediately.
-  const pendingMilitary = pending.filter(
-    (b) => b.kind === 'army' || b.kind === 'fleet'
-  ).length;
-  const pendingDisbands = pending.filter((b) => b.kind === 'disband').length;
-  const effectiveUnits = military + pendingMilitary - pendingDisbands;
 
   const add = (action: Omit<BuildAction, 'id'>) => {
     onBuildsChange([
@@ -89,7 +86,9 @@ export function BuildPanel({ gameState, onBuildsChange, onFinishTurn }: BuildPan
           Left: <strong className={remaining < 0 ? 'danger-text' : ''}>{remaining}</strong>
         </span>
         <span>
-          Units: <strong>{effectiveUnits}</strong> / {supplyCenters} SC (max {maxUnits})
+          Units: <strong>{effectiveUnits}</strong> / {supplyCenters} SC
+          {limit.cities > 0 &&
+            ` + ${limit.cities} ${limit.cities === 1 ? 'city' : 'cities'}`} (max {maxUnits})
           {limit.bought > 0 && ` (${limit.bought} paid for)`}
         </span>
         <span>

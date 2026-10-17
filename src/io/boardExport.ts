@@ -4,7 +4,7 @@
 import { GameState, PowerId, UNIT_GLYPH } from '../types/game';
 import { POWER_COLORS } from '../data/mapConfig';
 import { ALL_POWERS } from '../engine/economy';
-import { militaryUnitCount, ownedSupplyCenters } from '../engine/gameState';
+import { militaryUnitCount, occupiedCities, ownedSupplyCenters } from '../engine/gameState';
 import { downloadFile } from './save';
 
 export const BOARD_WIDTH = 1497;
@@ -103,6 +103,7 @@ export interface PowerStat {
   researchScore: number;
   wealth: number;
   supplyCenters: number;
+  cities: number;
   units: number;
 }
 
@@ -117,6 +118,7 @@ export function collectStats(state: GameState): PowerStat[] {
       researchScore: economy?.researchScore ?? 0,
       wealth: economy?.wealth ?? 0,
       supplyCenters: ownedSupplyCenters(state, power).length,
+      cities: occupiedCities(state, power).length,
       units: militaryUnitCount(state, power),
     };
   });
@@ -138,7 +140,7 @@ const PHASE_NAME: Record<string, string> = {
   adjudication: 'Adjudication',
   retreats: 'Retreats',
   builds: 'Build phase',
-  complete: 'Turn complete',
+  research: 'Research phase',
 };
 
 /** Builds the board statistics sheet as an SVG document. */
@@ -151,6 +153,7 @@ export function buildStatsSvg(state: GameState): string {
     { label: 'Diplomatic', width: 125, align: 'end' as const },
     { label: 'Research', width: 115, align: 'end' as const },
     { label: 'Supply c.', width: 115, align: 'end' as const },
+    { label: 'Cities', width: 85, align: 'end' as const },
     { label: 'Units', width: 90, align: 'end' as const },
     { label: 'Wealth', width: 100, align: 'end' as const },
   ];
@@ -181,6 +184,7 @@ export function buildStatsSvg(state: GameState): string {
         `${stat.diplomatic}`,
         `${stat.researchScore}`,
         `${stat.supplyCenters}`,
+        `${stat.cities}`,
         `${stat.units}`,
         `${stat.wealth}`,
       ];

@@ -68,7 +68,7 @@ scripts/
 3. **Order visualisation**: arrows for moves (white halo, drawn above the units), dashed support indicators,
    convoy routes, green/red after adjudication.
 4. **Clickable map**: click a province to select a unit, click a highlighted neighbour to order a move.
-   Hover shows a tooltip (name, type, supply centre, trade node).
+   Hover shows a tooltip (name, type, supply centre, city, trade node).
 5. **Adjudication**: support cuts, bounce, elite force, convoys (one army per fleet per turn), holds,
    dislodgement, retreats (adjacent, unoccupied, not the attacker's origin), build phase with
    eco costs, elite upgrade (max 2), fortify (lost when the supply centre changes hands).
@@ -87,13 +87,18 @@ scripts/
 10. **Income is collected exactly once per turn**: `collectIncome(state)` is guarded by `state.incomeTurn`.
     It is called when the retreats are resolved and again when the turn is finished - the second call
     is a no-op. The income is added to the ledger **before** the supply centre count is refreshed.
-11. **Occupancy colours**: every territory that has a supply centre **or a black dot** is drawn with a
-    circle in the colour of the power that occupies it (the `<g className="map-occupied">` layer of
-    `MapDisplay.tsx`, fed by `SUPPLY_CENTRE_MARKS` and `BLACK_DOT_MARKS`).
-12. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG), Turn report (txt).
-    Every export is previewed in the app so the game master can show it to the players.
-13. **Tests**: 102 vitest cases across adjudicator, game state, orders, research, save/load,
-    turn report, DATC style edge cases and map data. `npx tsc --noEmit` is clean,
+11. **Cities sustain a unit**: the small black dots of the map are cities. A city cannot host a new
+    unit (builds only happen in home supply centres, rules 3.3), but every city a power occupies
+    sustains one of its military units - just like a supply centre (rules 2.2). A power may therefore
+    keep `supply centres + occupied cities + units paid for with eco` military units.
+12. **Occupancy colours**: every occupied territory that has a supply centre **or a black dot** is
+    tinted across its full province with the occupying power's colour, and its supply-centre circle
+    or black city dot is recoloured too. `MapDisplay.tsx` draws the fill paths before the markers;
+    `src/data/territoryFillPaths.ts` contains the map-aligned province geometry.
+13. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG, with a *Cities* column),
+    Turn report (txt, with a *CITIES* section).
+14. **Tests**: 115 vitest cases across adjudicator, game state, orders, research, save/load,
+    turn report, DATC style edge cases, map data and occupied-province fills. `npx tsc --noEmit` is clean,
     `npm run build` succeeds.
 
 ### ⚠️ Known Gaps
@@ -124,8 +129,10 @@ the right, the *Game master tools* drawer is at the bottom.
    (adjacent, unoccupied, not the province the attacker came from). Units without a retreat are
    eliminated. *Continue to Build Phase* confirms the retreats and collects the income.
 4. **Step 3 - Build / Disband**: spend the eco points (army 6, fleet 6, caravan 4, elite upgrade 8,
-   fortify 3). The first units up to the number of owned supply centres are free. If a power has more
-   units than supply centres it has to disband before the turn can end (*Finish Turn* stays disabled).
+   fortify 3). Free military-unit slots come from controlled supply centres and occupied cities;
+   additional units may be paid for with eco. Cities sustain a unit but are never build locations.
+   Disband if military units exceed supply-centre + city capacity plus eco-paid units (*Finish Turn*
+   stays disabled).
 5. **Step 4 - Score research**: enter the research score (0-100) and the topic (economic / military /
    diplomatic) per power and press *apply*. 90+ → +3, 75-89 → +2, 50-74 → +1, below 50 → +0 points
    in the matching ledger; economic research becomes eco points and pays for the builds of the next
@@ -177,10 +184,11 @@ or if the fleet is ordered to sail away.
 - Caravan at a trade node = full node income; military unit at a node = half (floored).
 - Blockaded caravan (hostile military unit on the node) = 0 income but the caravan survives.
 - Banking cap 15 eco. Costs: army 6, fleet 6, caravan 4, elite upgrade 8, fortify 3.
-- A new army/fleet may be paid for with 1 supply centre instead of eco; caravans need 4 eco.
-- Units may not outnumber supply centres (unless paid for with eco) - disband in the build phase.
-  Two units built in the same turn are charged one after another: the first uses the free slot,
-  the second one costs eco.
+- A new army/fleet may use an unoccupied sustaining slot from a supply centre or an occupied city;
+  additional units may be paid for with eco (rules 3.3). Caravans need 4 eco.
+- Military units may not exceed controlled supply centres + occupied cities + eco-paid units -
+  disband in the build phase if they do. An eco-paid unit does not consume a future free slot.
+  Pending builds are charged in order: free slots are used first, then later builds cost eco.
 
 ### Research and winning
 - Score 90-100 → +3, 75-89 → +2, 50-74 → +1, <50 → +0 to the matching ledger (eco is capped at 15).
@@ -189,6 +197,19 @@ or if the fleet is ordered to sail away.
 
 ### Supply centres
 - Captured at the end of the turn. A supply centre that changes hands **loses its fortification**.
+
+### Cities (the black dots of the map)
+- The black dots/cities are **not named in the rulebook text**; I searched all 14 pages. Section 2.2
+  defines the **filled circle** as the marker for a supply centre, and says it sustains one army or
+  fleet. Section 2.3 defines the **gold star** as a trade node. Those sections do not define the black dots.
+- Your clarified rule is: a city **cannot build a unit**, but it **can sustain one military unit**. That
+  is consistent with the distinction in 3.3: new armies/fleets are built at home supply centres, while
+  the support cap counts the sustaining locations. The city rule itself comes from your clarification,
+  not an explicit black-dot rule in the PDF.
+- Implemented as a pool: a power may keep `supply centres it controls + cities it occupies + units
+  paid for with economic points` military units. A city is occupied when a unit of the power stands
+  in it; the city is tagged with `"isCity": true` in `src/data/territories.json`. A city slot is only
+  provided while occupied, and it does not make the city a build location.
 
 ### Documented interpretations (rules are ambiguous here)
 - A caravan in a power's home centre earns the full node value (Quick Reference wording).
@@ -202,8 +223,10 @@ or if the fleet is ordered to sail away.
   It contains `TERRITORY_POSITIONS` (96), `TERRITORY_LABEL_TEXT`, `SUPPLY_CENTRE_MARKS` (22),
   `NEUTRAL_MARKS` (5) and `BLACK_DOT_MARKS` (11 city dots of the printed map).
 - The black dots are **original artwork of the printed map**, not something that was added - the rulebook
-  only knows the filled circle (supply centre) and the gold star (trade node). They are used to show the
-  owner of a city in the colour of the occupying power.
+  only knows the filled circle (supply centre) and the gold star (trade node). They mark the cities and
+  are used to show the owner of a city in the colour of the occupying power. The 11 cities are flagged
+  with `"isCity": true` in `src/data/territories.json`; a test keeps that list and the extracted
+  `BLACK_DOT_MARKS` in sync.
 - Starting positions: Athens (SC: Athens/Rhodes/Crete, 4 eco), Sparta (Sparta/Corinth, 2 eco, elite army),
   Macedon (Macedon/Thessaly/Thrace, 2 eco), Satrapies (Bithynia/Galatia/Miletus, 3 eco),
   Persia (Damascus/Petra/Alexandria, 6 eco), Phoenicia (Sidon/Tyre/Cyprus, 5 eco),
@@ -216,7 +239,7 @@ npm install
 npm run dev          # dev server
 npm run build        # production build -> dist/
 npm run preview      # serve the build
-npm test             # vitest (102 cases)
+npm test             # vitest (112 cases)
 npx tsc --noEmit     # type check
 npm run map:extract  # regenerate territoryPositions.ts from map.svg
 ```
