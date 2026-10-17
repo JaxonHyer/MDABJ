@@ -43,7 +43,10 @@ export function calculateIncome(
     if (!territory.isTradeNode || !territory.tradeNodeValue) continue;
     const value = territory.tradeNodeValue;
 
-    const here = units.filter((u) => u.territoryId === territory.id && !u.destroyed);
+    // A unit that has to retreat earns no income (rules 5.3).
+    const here = units.filter(
+      (u) => u.territoryId === territory.id && !u.destroyed && !u.mustRetreat
+    );
     if (here.length === 0) continue;
 
     for (const caravan of here.filter((u) => u.type === 'caravan')) {

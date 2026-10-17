@@ -244,3 +244,21 @@ export const NEUTRAL_MARKS: Record<string, MapPoint> = {
   baleares: { x: -344.32, y: 345.87 },
   sardinia: { x: -145.68, y: 322.09 },
 };
+
+/**
+ * The small black city dots of the map. They are drawn in the colour
+ * of the power that occupies the province.
+ */
+export const BLACK_DOT_MARKS: Record<string, MapPoint & { r: number }> = {
+  jerusalem: { x: 765.32, y: 590.09, r: 3.8 },
+  byzantium: { x: 475.32, y: 288.09, r: 3.8 },
+  crimea: { x: 723.32, y: 154.09, r: 3.8 },
+  baleares: { x: -344.32, y: 345.87, r: 3.8 },
+  sardinia: { x: -145.68, y: 322.09, r: 3.8 },
+  cappadocia: { x: 767.38, y: 416.36, r: 3.8 },
+  memphis: { x: 669.88, y: 731.75, r: 3.8 },
+  epirus: { x: 261.32, y: 328.09, r: 3.8 },
+  delphi: { x: 311.32, y: 377.09, r: 3.8 },
+  dalmatia: { x: 112.32, y: 190.09, r: 3.8 },
+  neapolis: { x: 75.52, y: 305.86, r: 3.8 },
+};

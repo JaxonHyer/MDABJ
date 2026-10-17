@@ -1,6 +1,7 @@
 import { RefObject, useCallback, useMemo, useRef, useState } from 'react';
 import { GameState, Order, Unit, unitForce } from '../types/game';
 import {
+  BLACK_DOT_MARKS,
   SUPPLY_CENTRE_MARKS,
   TERRITORY_LABEL_TEXT,
   TERRITORY_POSITIONS,
@@ -151,7 +152,7 @@ export function MapDisplay({
   /** Colour of an order, green/red once the turn has been adjudicated. */
   const orderColor = useCallback(
     (unitId: string, fallback: string) => {
-      if (gameState.phase === 'orders' || gameState.phase === 'complete') return fallback;
+      if (gameState.phase === 'orders') return fallback;
       const result = resultByUnit.get(unitId);
       if (!result) return fallback;
       return result.success ? SUCCESS_COLOR : FAILURE_COLOR;
@@ -364,6 +365,54 @@ export function MapDisplay({
     return { added, removed };
   }, [gameState.territories]);
 
+  /**
+   * The supply centre circles and the small city dots of the map are drawn in
+   * the colour of the power that occupies the province. The map itself shows
+   * the supply centres in the colour of their home power, so the marker has
+   * to be painted over as soon as somebody else holds the province.
+   */
+  const occupiedMarkers = useMemo(() => {
+    const markers: {
+      id: string;
+      x: number;
+      y: number;
+      r: number;
+      color: string;
+    }[] = [];
+
+    const occupantOf = (territoryId: string) =>
+      gameState.units.find((u) => u.territoryId === territoryId && !u.destroyed)?.power;
+
+    for (const [id, territory] of Object.entries(gameState.territories)) {
+      if (!territory.isSupplyCenter) continue;
+      const power = occupantOf(id);
+      if (!power) continue;
+      const mark = SUPPLY_CENTRE_MARKS[id] ?? provinceAnchor(id);
+      if (!mark) continue;
+      markers.push({
+        id: `occupied-sc-${id}`,
+        x: mark.x,
+        y: mark.y,
+        r: 5.2,
+        color: POWER_COLORS[power] ?? NEUTRAL_COLOR,
+      });
+    }
+
+    for (const [id, dot] of Object.entries(BLACK_DOT_MARKS)) {
+      const power = occupantOf(id);
+      if (!power) continue;
+      markers.push({
+        id: `occupied-dot-${id}`,
+        x: dot.x,
+        y: dot.y,
+        r: dot.r,
+        color: POWER_COLORS[power] ?? NEUTRAL_COLOR,
+      });
+    }
+
+    return markers;
+  }, [gameState.territories, gameState.units]);
+
   const unitCount = gameState.units.filter((u) => !u.destroyed).length;
 
   return (
@@ -453,6 +502,20 @@ export function MapDisplay({
               />
             );
           })()}
+        </g>
+
+        {/* The colour of the power that occupies a supply centre or a city */}
+        <g className="map-occupied">
+          {occupiedMarkers.map((marker) => (
+            <g key={marker.id} transform={`translate(${marker.x} ${marker.y})`}>
+              <circle
+                r={marker.r}
+                fill={marker.color}
+                stroke="#020000"
+                strokeWidth={1}
+              />
+            </g>
+          ))}
         </g>
 
         {/* Supply centres placed by the game master */}

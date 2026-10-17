@@ -160,6 +160,8 @@ function markerShapes() {
 const marks = markerShapes();
 const supplyCentreMarks = {};
 const neutralMarks = {};
+/** The small black city dots of the map, with their radius. */
+const blackDots = [];
 
 // The coloured circles are matched to the home centres of the same power.
 // A greedy assignment over all (mark, centre) pairs is needed: matching
@@ -188,9 +190,22 @@ for (const pair of pairs) {
   supplyCentreMarks[pair.id] = { x: round(mark.x), y: round(mark.y) };
 }
 
-// The remaining shapes are the small black markers of neutral provinces.
+// The remaining shapes are the small black city dots of the map. Five of them
+// sit exactly on a province name, the rest are mapped by hand because the dot
+// is not always next to the name of its province.
+const MANUAL_DOTS = {
+  cappadocia: [767.4, 416.4],
+  memphis: [669.9, 731.7],
+  epirus: [261.3, 328.1],
+  delphi: [311.3, 377.1],
+  dalmatia: [112.3, 190.1],
+  neapolis: [75.5, 305.9],
+};
+
 for (const [index, mark] of marks.entries()) {
   if (usedMarks.has(index)) continue;
+  if (mark.fill !== '#000000') continue;
+
   let best = null;
   let bestDistance = Infinity;
   for (const id of Object.keys(territories)) {
@@ -203,6 +218,18 @@ for (const [index, mark] of marks.entries()) {
   }
   if (best && bestDistance < 32 && !supplyCentreMarks[best] && !neutralMarks[best]) {
     neutralMarks[best] = { x: round(mark.x), y: round(mark.y) };
+    blackDots.push({ id: best, x: round(mark.x), y: round(mark.y), r: 3.8 });
+  }
+}
+
+// The black dots that are not on a province name: they are matched by hand.
+for (const [index, mark] of marks.entries()) {
+  if (usedMarks.has(index)) continue;
+  if (mark.fill !== '#000000') continue;
+  for (const [id, [x, y]] of Object.entries(MANUAL_DOTS)) {
+    if (Math.hypot(mark.x - x, mark.y - y) < 2) {
+      blackDots.push({ id, x: round(mark.x), y: round(mark.y), r: 3.8 });
+    }
   }
 }
 
@@ -253,6 +280,16 @@ lines.push('export const NEUTRAL_MARKS: Record<string, MapPoint> = {');
 for (const id of Object.keys(neutralMarks)) {
   const p = neutralMarks[id];
   lines.push(`  ${id}: { x: ${p.x}, y: ${p.y} },`);
+}
+lines.push('};');
+lines.push('');
+lines.push('/**');
+lines.push(' * The small black city dots of the map. They are drawn in the colour');
+lines.push(' * of the power that occupies the province.');
+lines.push(' */');
+lines.push('export const BLACK_DOT_MARKS: Record<string, MapPoint & { r: number }> = {');
+for (const dot of blackDots) {
+  lines.push(`  ${dot.id}: { x: ${dot.x}, y: ${dot.y}, r: ${dot.r} },`);
 }
 lines.push('};');
 lines.push('');

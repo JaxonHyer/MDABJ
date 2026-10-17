@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   advanceTurn,
   applyBuilds,
+  collectIncome,
   applyRetreats,
   buildableHomeCenters,
   eliteUnitCount,
@@ -390,5 +391,68 @@ describe('economy', () => {
     // 4 eco + 2 for Jerusalem, and the income is not counted a second time.
     expect(next.economy.athens.eco).toBe(6);
     expect(next.economy.athens.wealth).toBe(2);
+  });
+});
+
+describe('income', () => {
+  it('adds the trade income to the ledger exactly once', () => {
+    const state = makeState([unit('athens', 'caravan', 'piraeus')], [], { athens: 4 });
+
+    const first = collectIncome(state);
+    expect(first.economy.athens.eco).toBe(5);
+    expect(first.economy.athens.wealth).toBe(1);
+    expect(first.lastIncome?.athens).toBe(1);
+
+    // Walking back and forth between the steps must not pay twice.
+    const second = collectIncome(first);
+    expect(second.economy.athens.eco).toBe(5);
+    expect(second.economy.athens.wealth).toBe(1);
+  });
+
+  it('gives a military unit on a trade node half of the value', () => {
+    const state = makeState([unit('athens', 'army', 'jerusalem')], [], { athens: 4 });
+    const next = collectIncome(state);
+
+    expect(next.economy.athens.eco).toBe(5);
+  });
+
+  it('counts the supply centres of the power', () => {
+    const state = makeState([unit('athens', 'army', 'athens')], [], { athens: 4 });
+    const next = collectIncome(state);
+
+    expect(next.economy.athens.supplyCenters).toBe(1);
+  });
+});
+
+describe('builds', () => {
+  it('charges eco points for every unit beyond the free supply centre slots', () => {
+    // Athens controls two supply centres (Athens and Crete) but only one
+    // military unit, so one new army is free and the second one costs 6.
+    const army = unit('athens', 'army', 'athens');
+    const caravan = unit('athens', 'caravan', 'crete');
+    const state = makeState([army, caravan], [], { athens: 12 });
+    state.builds = [
+      { id: 'b1', power: 'athens', kind: 'army', territoryId: 'athens' },
+      { id: 'b2', power: 'athens', kind: 'army', territoryId: 'athens' },
+    ];
+
+    const next = applyBuilds(state);
+
+    // The first army uses the free slot, the second one costs 6 eco.
+    expect(next.economy.athens.eco).toBe(6);
+    expect(next.units.filter((u) => u.power === 'athens' && u.type === 'army')).toHaveLength(3);
+    // Only the paid unit is allowed to stay without a supply centre.
+    expect(next.units.filter((u) => u.power === 'athens' && u.bought)).toHaveLength(1);
+  });
+
+  it('disbands a unit and frees the slot again', () => {
+    const army = unit('athens', 'army', 'athens');
+    const state = makeState([army], [], { athens: 6 });
+    state.builds = [{ id: 'd1', power: 'athens', kind: 'disband', unitId: army.id }];
+
+    const next = applyBuilds(state);
+
+    expect(next.units.filter((u) => u.power === 'athens')).toHaveLength(0);
+    expect(next.economy.athens.eco).toBe(6);
   });
 });
