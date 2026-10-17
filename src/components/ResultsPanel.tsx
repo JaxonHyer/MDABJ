@@ -5,11 +5,13 @@ interface ResultsPanelProps {
 }
 
 export function ResultsPanel({ gameState }: ResultsPanelProps) {
+  const income = gameState.lastIncome;
+
   return (
     <div className="results-panel">
       <h3>Adjudication Results</h3>
       {gameState.results.length === 0 ? (
-        <p style={{ opacity: 0.6, fontSize: '0.85rem' }}>
+        <p className="hint">
           No results yet. Enter orders and adjudicate to see results.
         </p>
       ) : (
@@ -20,6 +22,18 @@ export function ResultsPanel({ gameState }: ResultsPanelProps) {
               className={`result-item ${result.success ? 'success' : 'failure'}`}
             >
               {result.message}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {income && Object.keys(income).length > 0 && (
+        <div className="income-list">
+          <h4>Economic income</h4>
+          {Object.entries(income).map(([power, value]) => (
+            <div key={power} className="income-row">
+              <span>{power}</span>
+              <span>+{value}</span>
             </div>
           ))}
         </div>
