@@ -38,6 +38,7 @@ src/
   io/
     save.ts              # Save file format (mare-nostrum-save v1), load/export
     boardExport.ts       # Board SVG/PNG + stats sheet SVG/PNG
+    turnReport.ts        # Plain text turn report for Discord
   components/
     MapDisplay.tsx       # Map renderer (units, order arrows, SC markers, hover)
     OrderPanel.tsx       # Order entry
@@ -45,6 +46,7 @@ src/
     BuildPanel.tsx       # Build/upgrade/fortify/disband
     ResultsPanel.tsx     # Adjudication results + income
     AdminPanel.tsx       # GM tools: research, ledger, supply centres, files
+    ResearchPanel.tsx    # Research phase (scoring the research of the turn)
   App.tsx                # Shell: sidebar (Play / Game master), export handlers
 public/
   map.svg                # Inkscape SVG map (viewBox fixed)
@@ -73,10 +75,15 @@ scripts/
 6. **Economy**: trade-node income (caravan = full, military = half floored, blockaded caravan = 0),
    banking cap 15, wealth = cumulative eco, research bonuses into eco/military/diplomatic ledgers.
 7. **GM panel**: research score + topic per power, eco/military/diplomatic adjustments,
-   place & remove supply centres (click the map), load a save file, export save/board/stats.
-8. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG) - all verified in a browser.
-9. **Tests**: 82 vitest cases across adjudicator, game state, orders, research, save/load and map data.
-   `npx tsc --noEmit` is clean, `npm run build` succeeds.
+   place & remove supply centres (click the map), load a save file, export save/board/stats/report.
+8. **Research phase**: every turn starts with the research phase (rules 4.1). The game master scores
+   the research of all eight powers, the bonus goes to the matching ledger, then the turn continues
+   into the orders phase.
+9. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG), Turn report (txt).
+   Every export is previewed in the app so the game master can show it to the players.
+10. **Tests**: 97 vitest cases across adjudicator, game state, orders, research, save/load,
+   turn report, DATC style edge cases and map data. `npx tsc --noEmit` is clean,
+   `npm run build` succeeds.
 
 ### ⚠️ Known Gaps
 
@@ -84,25 +91,30 @@ scripts/
 - **Policy phase** is inactive in this ruleset and is not implemented.
 - **Caravan vs. hostile caravan** (both eliminated, +1 eco to the attacker) is *not* implemented: the rules
   body marks it "inactive for this round", the Quick Reference still lists it. Flag before using.
-- **Research phase** is not a step in the phase machine; the GM enters scores in the Game master panel.
-- **DATC edge cases** (circular convoys, self-standoff, dislodged unit back to the attacker) are only
-  partially covered by unit tests.
-- Board/stats exports are downloaded files; there is no in-app player view of the last export.
+- **DATC edge cases**: `src/engine/datk.test.ts` covers the support cut rules, the self standoff,
+  the bounce, the dislodged supporter, the convoy disruption and the retreat rules. The classic
+  circular convoy (DATC 6.A.7) and Pandin's paradox (6.F.16) are not implemented - the rules of
+  this variant are much simpler than the standard Diplomacy ones.
+- The turn report lists the state of the turn; it does not build a per power Discord message.
 
 ## Game Master Workflow
 
 1. **Game master** tab in the sidebar → **Files** → *Load save file* (a `mare-nostrum-save` JSON) or start a new game.
-2. **Play** tab → select a power → click its unit on the map → pick the order type → click the target.
+2. **Research phase** (the start of every turn): score the research of the eight powers and press
+   *Continue to orders*.
+3. **Play** tab → select a power → click its unit on the map → pick the order type → click the target.
    *Adjudicate All Orders* resolves the turn.
-3. Dislodged units: **Retreat** panel. New units: **Build** panel (eco, elite, fortify, disband).
-4. **Game master** tab:
+4. Dislodged units: **Retreat** panel. New units: **Build** panel (eco, elite, fortify, disband).
+5. **Game master** tab:
    - *Research*: enter the score (0-100) and the topic (economic/military/diplomatic) → the matching ledger
      gets +3/+2/+1/+0 and the score is stored as a cumulative research score.
    - *Ledger*: adjust eco or military/diplomatic points by hand (e.g. for a caravan the GM placed by hand).
    - *Supply centres*: switch on *Place supply centre mode*, pick the owning power, click a province.
      The same control removes a supply centre again.
-   - *Files*: export **Save** (JSON), **Board** (SVG/PNG) and **Stats** (SVG/PNG) and hand them to the players.
-5. **Finish Turn** ends the turn (15 game-years pass: 350 BC → 335 BC → …, 8 turns per semester → 245 BC).
+   - *Files*: export **Save** (JSON), **Board** (SVG/PNG), **Stats** (SVG/PNG) and the
+     **Turn report** (txt, ready to paste into Discord) and hand them to the players.
+6. **Finish Turn** ends the turn (15 game-years pass: 350 BC → 335 BC → …, 8 turns per semester → 245 BC).
+   The next turn starts in the research phase again.
 
 ### Save file format
 
@@ -123,6 +135,8 @@ built-in map data.
 
 ### Turn order
 Research → GM scoring → Policy *(inactive)* → Diplomacy → Orders → Adjudication → Income → Retreat → Build.
+The income is collected **before** the build phase, so the game master can spend it right away.
+It is collected exactly once per turn (the ledger and the wealth are updated in the income phase).
 
 ### Combat
 - Attack force = unit force + uncut support. Elite = force 2 in attack *and* defence, needs 3+ to dislodge.
@@ -172,7 +186,7 @@ npm install
 npm run dev          # dev server
 npm run build        # production build -> dist/
 npm run preview      # serve the build
-npm test             # vitest (82 cases)
+npm test             # vitest (97 cases)
 npx tsc --noEmit     # type check
 npm run map:extract  # regenerate territoryPositions.ts from map.svg
 ```
