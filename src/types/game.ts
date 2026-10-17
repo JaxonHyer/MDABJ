@@ -76,9 +76,9 @@ export interface Unit {
   /** Province the unit came from this turn - used to draw the move arrow. */
   originTerritoryId?: string;
   /**
-   * The unit was paid for with economic points instead of a supply centre
-   * slot (rules 3.3). Such a unit may be kept even when the power holds
-   * fewer supply centres than it has units.
+   * The unit was paid for with economic points instead of a supply-centre
+   * or occupied-city slot (rules 3.3 and the city-sustains rule). Such a unit
+   * may be kept in addition to the power's other sustaining capacity.
    */
   bought?: boolean;
 }

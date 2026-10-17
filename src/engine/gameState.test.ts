@@ -239,9 +239,9 @@ describe('supply centres and unit limits', () => {
     expect(centers).not.toContain('corinth');
   });
 
-  it('allows more units than supply centres when the economy pays for it', () => {
-    // A unit that was bought with economic points may be kept even when the
-    // power holds fewer supply centres than it has units.
+  it('allows paid units in addition to sustaining capacity', () => {
+    // A unit that was bought with economic points may be kept in addition
+    // to the capacity provided by supply centres and occupied cities.
     const state = makeState(
       [
         unit('athens', 'army', 'athens'),
@@ -259,6 +259,27 @@ describe('supply centres and unit limits', () => {
       bought: 1,
       max: 4,
     });
+  });
+
+  it('uses free city and supply-centre slots before charging for a pending build', () => {
+    const state = makeState(
+      [
+        unit('athens', 'army', 'athens'),
+        unit('athens', 'fleet', 'rhodes'),
+        { ...unit('athens', 'army', 'crete'), bought: true },
+      ],
+      [],
+      { athens: 6 }
+    );
+    const builds: BuildAction[] = [
+      { id: 'b1', power: 'athens', kind: 'army', territoryId: 'athens' },
+      { id: 'b2', power: 'athens', kind: 'army', territoryId: 'rhodes' },
+    ];
+
+    expect(freeSupplySlots(state, 'athens')).toBe(1);
+    expect(validateBuild(state, builds[0], builds).cost).toBe(0);
+    expect(validateBuild(state, builds[1], builds).cost).toBe(6);
+    expect(pendingBuildCost({ ...state, builds }, 'athens')).toBe(6);
   });
 
   it('marks a unit that was paid for with economic points', () => {
@@ -428,7 +449,7 @@ describe('income', () => {
 });
 
 describe('builds', () => {
-  it('charges eco points for every unit beyond the free supply centre slots', () => {
+  it('charges eco points for every military unit beyond the free sustaining slots', () => {
     // Athens controls two supply centres (Athens and Crete) but only one
     // military unit, so one new army is free and the second one costs 6.
     const army = unit('athens', 'army', 'athens');
@@ -506,6 +527,31 @@ describe('cities', () => {
     const validation = validateBuild(state, action, [action]);
     expect(validation.ok).toBe(false);
     expect(validation.errors.join(' ')).toContain('city');
+  });
+
+  it('allows an eco-paid unit to remain while later builds use newly available capacity', () => {
+    const state = makeState(
+      [
+        unit('athens', 'army', 'athens'),
+        unit('athens', 'fleet', 'rhodes'),
+        { ...unit('athens', 'army', 'crete'), bought: true },
+      ],
+      [],
+      { athens: 12 }
+    );
+    const builds: BuildAction[] = [
+      { id: 'b1', power: 'athens', kind: 'army', territoryId: 'athens' },
+      { id: 'b2', power: 'athens', kind: 'army', territoryId: 'rhodes' },
+    ];
+
+    const applied = applyBuilds({ ...state, builds });
+    expect(applied.economy.athens.eco).toBe(6);
+    expect(unitLimit(applied, 'athens')).toMatchObject({
+      supplyCenters: 3,
+      units: 5,
+      bought: 2,
+      max: 5,
+    });
   });
 
   it('counts an occupied city as a free slot for a unit that is built', () => {

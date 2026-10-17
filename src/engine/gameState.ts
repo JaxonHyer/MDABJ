@@ -125,26 +125,67 @@ export function eliteUnitCount(state: GameState, power: PowerId): number {
 }
 
 /**
- * The slots a power has not used yet (rules 3.3).
- * "Any military unit may be built to bring the number of units into
- * equality with supply centers owned, no matter the economic points a
- * power possesses." - the first units are therefore free.
+ * The supply slots a power has not used yet (rules 2.2 / 3.3), after the
+ * supplied pending actions. A military unit paid for with eco does not use
+ * a supply slot. Pending actions are interpreted in order, just as they are
+ * applied in the build phase.
  *
- * A city sustains a unit like a supply centre, so it is part of the pool of
- * free slots as well - a unit is never built in a city though.
+ * Occupied cities sustain one unit in the same way as supply centres, but
+ * they are never build locations.
  */
 export function freeSupplySlots(
   state: GameState,
   power: PowerId,
   pending: BuildAction[] = []
 ): number {
-  const capacity = ownedSupplyCenters(state, power).length + occupiedCities(state, power).length;
-  const military = militaryUnitCount(state, power);
-  const newMilitary = pending.filter(
-    (b) => b.power === power && (b.kind === 'army' || b.kind === 'fleet')
-  ).length;
-  const disbands = pending.filter((b) => b.power === power && b.kind === 'disband').length;
-  return Math.max(0, capacity - (military + newMilitary - disbands));
+  let units = state.units.filter((u) => u.power === power && !u.destroyed).map((u) => ({ ...u }));
+
+  const freeSlots = () => {
+    const projectedState = { ...state, units };
+    const capacity =
+      ownedSupplyCenters(projectedState, power).length + occupiedCities(projectedState, power).length;
+    const supportedUnits = units.filter((u) => isMilitary(u) && !u.bought).length;
+    return Math.max(0, capacity - supportedUnits);
+  };
+
+  for (const action of pending) {
+    if (action.power !== power) continue;
+
+    if (action.kind === 'disband') {
+      units = units.filter((u) => u.id !== action.unitId);
+      continue;
+    }
+
+    if (action.kind === 'army' || action.kind === 'fleet') {
+      if (!action.territoryId) continue;
+      // Use a free slot if one is available; otherwise the new unit is paid
+      // for with eco and does not consume any existing or future slot.
+      const bought = freeSlots() <= 0;
+      units.push({
+        id: `pending_${action.id}`,
+        power,
+        type: action.kind,
+        territoryId: action.territoryId,
+        isElite: false,
+        bought,
+      });
+      continue;
+    }
+
+    if (action.kind === 'caravan' && action.territoryId) {
+      // A caravan does not itself need a military slot, but it can occupy a
+      // city and therefore provide that city's sustaining capacity.
+      units.push({
+        id: `pending_${action.id}`,
+        power,
+        type: 'caravan',
+        territoryId: action.territoryId,
+        isElite: false,
+      });
+    }
+  }
+
+  return freeSlots();
 }
 
 export interface UnitLimit {
@@ -269,7 +310,13 @@ export function validateBuild(
 ): BuildValidation {
   const errors: string[] = [];
   const power = action.power;
-  const others = pending.filter((b) => b.power === power && b.id !== action.id);
+  const actionsForPower = pending.filter((b) => b.power === power);
+  const actionIndex = actionsForPower.findIndex((b) => b.id === action.id);
+  const priorActions =
+    actionIndex >= 0
+      ? actionsForPower.slice(0, actionIndex)
+      : actionsForPower.filter((b) => b.id !== action.id);
+  const others = actionsForPower.filter((b) => b.id !== action.id);
 
   const eco = state.economy[power]?.eco ?? 0;
   const units = state.units.filter((u) => u.power === power && !u.destroyed);
@@ -297,8 +344,10 @@ export function validateBuild(
         }
         break;
       }
-      // The first N military units are paid for by supply centres.
-      if (freeSupplySlots(state, power, others) <= 0) cost += BUILD_COST[action.kind];
+      // The first N military units are paid for by a supply centre or an
+      // occupied city. Existing and pending eco-paid units do not consume
+      // these free slots.
+      if (freeSupplySlots(state, power, priorActions) <= 0) cost += BUILD_COST[action.kind];
       break;
     }
     case 'caravan': {
