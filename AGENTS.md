@@ -91,13 +91,14 @@ scripts/
     unit (builds only happen in home supply centres, rules 3.3), but every city a power occupies
     sustains one of its military units - just like a supply centre (rules 2.2). A power may therefore
     keep `supply centres + occupied cities + units paid for with eco` military units.
-12. **Occupancy colours**: every territory that has a supply centre **or a black dot** is drawn with a
-    circle in the colour of the power that occupies it (the `<g className="map-occupied">` layer of
-    `MapDisplay.tsx`, fed by `SUPPLY_CENTRE_MARKS` and `BLACK_DOT_MARKS`).
+12. **Occupancy colours**: every occupied territory that has a supply centre **or a black dot** is
+    tinted across its full province with the occupying power's colour, and its supply-centre circle
+    or black city dot is recoloured too. `MapDisplay.tsx` draws the fill paths before the markers;
+    `src/data/territoryFillPaths.ts` contains the map-aligned province geometry.
 13. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG, with a *Cities* column),
     Turn report (txt, with a *CITIES* section).
-14. **Tests**: 112 vitest cases across adjudicator, game state, orders, research, save/load,
-    turn report, DATC style edge cases and map data. `npx tsc --noEmit` is clean,
+14. **Tests**: 115 vitest cases across adjudicator, game state, orders, research, save/load,
+    turn report, DATC style edge cases, map data and occupied-province fills. `npx tsc --noEmit` is clean,
     `npm run build` succeeds.
 
 ### ⚠️ Known Gaps
