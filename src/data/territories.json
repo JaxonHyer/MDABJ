@@ -7,7 +7,7 @@
       "isSupplyCenter": true,
       "homePower": "athens",
       "isTradeNode": false,
-      "adjacent": ["corinth", "thessaly", "aegean_sea", "corinthian_sea"]
+      "adjacent": ["corinth", "thessaly", "piraeus", "delphi", "aegean_sea", "corinthian_sea"]
     },
     "sparta": {
       "id": "sparta",
@@ -33,8 +33,7 @@
       "id": "piraeus",
       "name": "Piraeus",
       "type": "coastal",
-      "isSupplyCenter": true,
-      "homePower": "athens",
+      "isSupplyCenter": false,
       "isTradeNode": true,
       "tradeNodeValue": 1,
       "adjacent": ["athens", "aegean_sea", "corinthian_sea"],
@@ -71,8 +70,7 @@
       "id": "epirus",
       "name": "Epirus",
       "type": "coastal",
-      "isSupplyCenter": true,
-      "homePower": null,
+      "isSupplyCenter": false,
       "isTradeNode": false,
       "adjacent": ["macedon", "thessaly", "corinth", "sparta", "delphi", "ionian_sea", "aegean_sea"]
     },
@@ -80,8 +78,7 @@
       "id": "delphi",
       "name": "Delphi",
       "type": "land",
-      "isSupplyCenter": true,
-      "homePower": null,
+      "isSupplyCenter": false,
       "isTradeNode": false,
       "adjacent": ["thessaly", "epirus", "athens"]
     },
@@ -89,11 +86,10 @@
       "id": "byzantium",
       "name": "Byzantium",
       "type": "coastal",
-      "isSupplyCenter": true,
-      "homePower": null,
+      "isSupplyCenter": false,
       "isTradeNode": true,
       "tradeNodeValue": 2,
-      "adjacent": ["thrace", "bithynia", "dacia", "aegean_sea", "pontus_euxinus"],
+      "adjacent": ["thrace", "bithynia", "aegean_sea", "pontus_euxinus"],
       "tradeRoutes": ["corinth", "media"]
     },
     "bithynia": {
@@ -195,7 +191,7 @@
       "isSupplyCenter": true,
       "homePower": "persia",
       "isTradeNode": false,
-      "adjacent": ["damascus", "gaza", "nabatea", "idumea"]
+      "adjacent": ["damascus", "gaza", "nabatea", "idumea", "jerusalem"]
     },
     "alexandria": {
       "id": "alexandria",
@@ -205,7 +201,7 @@
       "homePower": "persia",
       "isTradeNode": true,
       "tradeNodeValue": 1,
-      "adjacent": ["memphis", "sinai", "egyptian_sea", "libyan_sea"],
+      "adjacent": ["memphis", "naucratis", "sinai", "egyptian_sea", "libyan_sea"],
       "tradeRoutes": ["naucratis", "sicilia"]
     },
     "naucratis": {
@@ -349,8 +345,7 @@
       "id": "neapolis",
       "name": "Neapolis",
       "type": "coastal",
-      "isSupplyCenter": true,
-      "homePower": "rome",
+      "isSupplyCenter": false,
       "isTradeNode": false,
       "adjacent": ["rome", "apulia", "tyrrhenian_sea", "ausonian_sea"]
     },
@@ -379,7 +374,7 @@
       "isSupplyCenter": false,
       "homePower": null,
       "isTradeNode": false,
-      "adjacent": ["dalmatia", "venezia", "noricum", "dacia", "sarmatia", "ungaria"]
+      "adjacent": ["dalmatia", "noricum", "dacia", "sarmatia", "ungaria"]
     },
     "sarmatia": {
       "id": "sarmatia",
@@ -388,7 +383,7 @@
       "isSupplyCenter": false,
       "homePower": null,
       "isTradeNode": false,
-      "adjacent": ["dacia", "pannonia", "crimea", "chersonesus"]
+      "adjacent": ["dacia", "pannonia", "ungaria", "crimea", "chersonesus"]
     },
     "crimea": {
       "id": "crimea",
@@ -523,7 +518,7 @@
       "isSupplyCenter": false,
       "homePower": null,
       "isTradeNode": false,
-      "adjacent": ["cyrenaica", "ammon", "alexandria", "libyan_sea"]
+      "adjacent": ["cyrenaica", "ammon", "africa_sarpentiensis", "libyan_sea"]
     },
     "etruria": {
       "id": "etruria",
@@ -685,7 +680,7 @@
       "isSupplyCenter": false,
       "homePower": null,
       "isTradeNode": false,
-      "adjacent": ["bayuda"]
+      "adjacent": ["bayuda", "marmarica"]
     },
     "aegean_sea": {
       "id": "aegean_sea",
@@ -694,7 +689,7 @@
       "isSupplyCenter": false,
       "homePower": null,
       "isTradeNode": false,
-      "adjacent": ["athens", "corinth", "thessaly", "epirus", "thrace", "byzantium", "bithynia", "miletus", "rhodes", "crete", "minoan_sea", "pontus_euxinus", "corinthian_sea", "messenian_sea"]
+      "adjacent": ["athens", "corinth", "thessaly", "epirus", "thrace", "byzantium", "bithynia", "miletus", "rhodes", "crete", "piraeus", "minoan_sea", "pontus_euxinus", "corinthian_sea", "messenian_sea"]
     },
     "ionian_sea": {
       "id": "ionian_sea",
@@ -739,7 +734,7 @@
       "isSupplyCenter": false,
       "homePower": null,
       "isTradeNode": false,
-      "adjacent": ["crete", "marmarica", "alexandria", "messenian_sea", "egyptian_sea", "gulf_of_syrtis"]
+      "adjacent": ["crete", "marmarica", "cyrenaica", "alexandria", "messenian_sea", "egyptian_sea", "gulf_of_syrtis"]
     },
     "egyptian_sea": {
       "id": "egyptian_sea",

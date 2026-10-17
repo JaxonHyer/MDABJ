@@ -12,7 +12,7 @@ export function loadPowers(): Power[] {
       id: 'athens',
       name: 'Athens',
       color: '#4CAF50',
-      homeCenters: ['athens', 'piraeus', 'rhodes', 'crete'],
+      homeCenters: ['athens', 'rhodes', 'crete'],
       startingUnits: [
         { id: 'athens_army_1', power: 'athens', type: 'army', territoryId: 'athens', isElite: false },
         { id: 'athens_fleet_1', power: 'athens', type: 'fleet', territoryId: 'rhodes', isElite: false },
@@ -100,7 +100,7 @@ export function loadPowers(): Power[] {
       id: 'rome',
       name: 'Rome',
       color: '#F44336',
-      homeCenters: ['rome', 'ravenna', 'neapolis'],
+      homeCenters: ['rome', 'ravenna'],
       startingUnits: [
         { id: 'rome_army_1', power: 'rome', type: 'army', territoryId: 'rome', isElite: false },
         { id: 'rome_army_2', power: 'rome', type: 'army', territoryId: 'ravenna', isElite: false },
