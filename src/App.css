@@ -314,6 +314,199 @@ body {
   opacity: 0.9;
 }
 
+/* Pasted order text and its explicit review step */
+.order-text-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #333;
+}
+
+.order-text-entry h4 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.order-text-entry textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 7rem;
+  resize: vertical;
+  padding: 0.65rem;
+  background: #101216;
+  color: #f0f1f5;
+  border: 1px solid #4b5262;
+  border-radius: 6px;
+  font: 0.82rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.order-text-entry textarea:focus {
+  outline: 2px solid #7889f0;
+  outline-offset: 1px;
+}
+
+.order-text-entry textarea[readonly] {
+  border-color: #667eea;
+  opacity: 0.88;
+}
+
+.order-text-example {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.order-text-example code,
+.order-parse-source code {
+  padding: 0.15rem 0.35rem;
+  background: #252936;
+  border: 1px solid #343a4a;
+  border-radius: 4px;
+  color: #dce2ff;
+  font-size: 0.72rem;
+}
+
+.order-parse-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.order-parse-summary {
+  padding: 0.45rem 0.55rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+}
+
+.order-parse-summary.is-valid {
+  background: #1c3324;
+  border: 1px solid #315b3d;
+  color: #b8eac2;
+}
+
+.order-parse-summary.has-errors {
+  background: #3a2020;
+  border: 1px solid #7a3939;
+  color: #ffc1b8;
+}
+
+.order-parse-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 280px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-parse-line {
+  padding: 0.45rem 0.55rem;
+  background: #23252c;
+  border-left: 3px solid #5eaa70;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+
+.order-parse-line.has-error {
+  background: #302222;
+  border-left-color: #e46666;
+}
+
+.order-parse-source {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  color: #aab0bf;
+  font-size: 0.7rem;
+}
+
+.order-parse-result,
+.order-parse-error {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.order-parse-result {
+  color: #d5e8d8;
+}
+
+.order-parse-result.is-invalid {
+  color: #ffd3cb;
+}
+
+.order-parse-error,
+.order-parse-note {
+  color: #ffaaa1;
+}
+
+.order-parse-note {
+  display: block;
+  margin-top: 0.15rem;
+  color: #c5cbee;
+}
+
+.order-review-actions {
+  padding: 0.5rem;
+  background: #202433;
+  border: 1px solid #424b6a;
+  border-radius: 6px;
+}
+
+.order-review-actions .hint {
+  margin-top: 0;
+}
+
+.order-text-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.order-text-actions .primary-button,
+.order-text-actions .secondary-button {
+  margin-top: 0;
+  justify-content: center;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.button-row .primary-button,
+.button-row .secondary-button {
+  flex: 1;
+  width: auto;
+  margin-top: 0;
+}
+
+.manual-order-editor {
+  padding-top: 0.5rem;
+}
+
+.manual-order-editor > summary {
+  cursor: pointer;
+  color: #cbd2e3;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.manual-order-editor[open] > summary {
+  margin-bottom: 0.6rem;
+}
+
+.order-applied-message {
+  margin: 0.25rem 0 0;
+  color: #9fd8a9;
+  font-size: 0.78rem;
+}
+
 /* ------------------------------------------------------------------ */
 /* Map                                                                */
 /* ------------------------------------------------------------------ */
@@ -421,6 +614,16 @@ body {
   justify-content: space-between;
   font-size: 0.8rem;
   opacity: 0.85;
+}
+
+.income-collection-note {
+  margin: 0.4rem 0 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 3px solid #74bc7f;
+  border-radius: 3px;
+  background: #1d2c21;
+  color: #c1e4c7;
+  font-size: 0.8rem;
 }
 
 /* ------------------------------------------------------------------ */
@@ -720,30 +923,150 @@ body {
 }
 
 /* Research phase */
+.research-explainer {
+  line-height: 1.5;
+}
+
 .research-list {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  margin: 0.6rem 0 0.9rem;
+  margin: 0.6rem 0 0.5rem;
 }
 
 .research-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   background: #1b1f2b;
   border: 1px solid #2a2f3d;
   border-radius: 6px;
 }
 
+.research-power {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 5.5rem;
+  line-height: 1.25;
+}
+
+.research-power small {
+  margin-top: 0.1rem;
+  color: #939bad;
+  font-size: 0.67rem;
+}
+
 .research-row input {
-  width: 4.5rem;
+  box-sizing: border-box;
+  width: 4rem;
+  padding: 0.35rem 0.4rem;
+  background: #101216;
+  border: 1px solid #4b5262;
+  border-radius: 4px;
+  color: #f1f1f1;
 }
 
 .research-row select {
-  flex: 1;
+  flex: 0 1 7.4rem;
   min-width: 0;
+  padding: 0.35rem 0.25rem;
+  background: #101216;
+  border: 1px solid #4b5262;
+  border-radius: 4px;
+  color: #eee;
+  font-size: 0.75rem;
+}
+
+.research-award {
+  width: 4.4rem;
+  flex: 0 0 4.4rem;
+  color: #a9d8b2;
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.research-review {
+  margin: 0.6rem 0;
+  padding: 0.55rem;
+  background: #1b1f2b;
+  border: 1px solid #3a4258;
+  border-radius: 6px;
+}
+
+.research-review-title h4 {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.research-review-title .hint {
+  margin: 0.15rem 0 0.5rem;
+}
+
+.research-review-scroll {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.research-review-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.research-review-table th,
+.research-review-table td {
+  padding: 0.4rem 0.45rem;
+  border-bottom: 1px solid #343a4a;
+  white-space: nowrap;
+}
+
+.research-review-table thead th {
+  position: sticky;
+  top: 0;
+  background: #252936;
+  color: #b9c3da;
+}
+
+.research-review-table tbody th {
+  font-weight: 700;
+}
+
+.research-cap-note {
+  color: #ffc58e;
+}
+
+.research-review-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.research-review-actions .primary-button,
+.research-review-actions .secondary-button {
+  flex: 1;
+  width: auto;
+  margin-top: 0;
+}
+
+@media (max-width: 480px) {
+  .research-row {
+    flex-wrap: wrap;
+  }
+
+  .research-power {
+    flex-basis: 100%;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .research-review-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
 }
 
 .preview-text {

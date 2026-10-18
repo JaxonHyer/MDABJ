@@ -11,6 +11,9 @@ A Diplomacy adjudicator for the **Mare Nostrum** custom variant, built with Type
   - Trade nodes and economic system
   - Trade route movement for Caravans
 - Custom map support (SVG-based)
+- GM-first workflow with case-insensitive pasted orders, line-by-line validation, and an explicit review/apply step (plus clickable map entry)
+- Automatic, exactly-once trade income collection after retreats
+- Reviewed 0-7 research scoring with a preview of ledger awards
 - Deployable to GitHub Pages
 
 ### Development

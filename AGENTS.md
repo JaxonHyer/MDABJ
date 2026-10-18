@@ -24,8 +24,10 @@ src/
     adjudicator.ts       # Movement, combat, support, convoys, holds
     gameState.ts         # Phase machine, builds, retreats, income, supply centres
     economy.ts           # Income, banking cap (15), eco/point adjustments
-    research.ts          # Research scoring table (90/75/50 -> +3/+2/+1/+0)
+    research.ts          # Research score input validation and reward bands (0-7 -> +0 to +3)
     orders.ts            # Legal order targets, support helpers
+    orderText.ts         # Case/spacing-tolerant order text parsing and validation
+    turnSnapshot.ts     # Safe turn-start unit state for re-adjudication
     testHelpers.ts       # makeState()/unit()/order() builders for tests
   types/
     game.ts              # PowerId, UnitType, Phase, Territory, Unit, Order, Economy, GameState
@@ -41,12 +43,12 @@ src/
     turnReport.ts        # Plain text turn report for Discord
   components/
     MapDisplay.tsx       # Map renderer (units, order arrows, SC markers, occupancy colours, hover)
-    OrderPanel.tsx       # Order entry
+    OrderPanel.tsx       # Paste/preview/review order text + map/unit-by-unit entry
     RetreatPanel.tsx     # Retreat decisions for dislodged units
     BuildPanel.tsx       # Build/upgrade/fortify/disband
     ResultsPanel.tsx     # Adjudication results + income
     AdminPanel.tsx       # GM tools: ledger, supply centres, files
-    ResearchPanel.tsx    # Step 4: score the research of the turn (0-100 -> points)
+    ResearchPanel.tsx    # Step 4: enter and review all powers' research scores (0-7 -> points)
   App.tsx                # Shell: 4-step navigation, order/build handlers, export handlers
 public/
   map.svg                # Inkscape SVG map (viewBox fixed)
@@ -75,15 +77,17 @@ scripts/
 6. **Economy**: trade-node income (caravan = full, military = half floored, blockaded caravan = 0),
    banking cap 15, wealth = cumulative eco, research bonuses into eco/military/diplomatic ledgers.
 7. **Four-step turn UI**: the sidebar shows the steps **1 Move → 2 Retreats → 3 Build / Disband →
-   4 Score research** with a short hint per step. The GM may jump between the steps freely; every
-   step reads the same state, so nothing is lost. The game master tools (ledger, supply centres,
-   files, exports) live in a collapsible *Game master tools* drawer at the bottom of the sidebar.
+   4 Score research** with a short hint per step. The GM may navigate between steps freely, but
+   phase-changing actions are enabled only in their proper phase to prevent skipping work or
+   collecting income early. The game master tools (ledger, supply centres, files, exports) live in a
+   collapsible *Game master tools* drawer at the bottom of the sidebar.
 8. **Turn order**: Move (orders + adjudication) → Retreats → Build/Disband → Score research → Move.
    The engine phase machine is `orders → adjudication → retreats → builds → research → orders`;
    `createInitialState()` starts in `orders`, `advanceTurn()` ends in `research`.
-9. **Re-adjudication is safe**: the GM can go back to step 1, change an order and adjudicate again.
-   The adjudication always starts from the snapshot of the beginning of the turn (`turnStartRef`),
-   so a unit is never moved twice.
+9. **Re-adjudication is safe before retreats are resolved**: the GM can return to step 1 during the
+   Retreats step, change an order and adjudicate again from the turn-start snapshot. Order editing is
+   locked once retreats and income are resolved. A save loaded after adjudication has no in-memory
+   turn-start snapshot, so re-adjudication is disabled rather than risking moving units twice.
 10. **Income is collected exactly once per turn**: `collectIncome(state)` is guarded by `state.incomeTurn`.
     It is called when the retreats are resolved and again when the turn is finished - the second call
     is a no-op. The income is added to the ledger **before** the supply centre count is refreshed.
@@ -97,12 +101,13 @@ scripts/
     `src/data/territoryFillPaths.ts` contains the map-aligned province geometry.
 13. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG, with a *Cities* column),
     Turn report (txt, with a *CITIES* section).
-14. **Tests**: 115 vitest cases across adjudicator, game state, orders, research, save/load,
-    turn report, DATC style edge cases, map data and occupied-province fills. `npx tsc --noEmit` is clean,
-    `npm run build` succeeds.
+14. **Tests**: 137 vitest cases across adjudication, order text parsing, turn snapshots, game state, research,
+    save/load, turn report, DATC-style edge cases, map data and occupied-province fills. `npm run build`
+    succeeds and includes the TypeScript check.
 
 ### ⚠️ Known Gaps
 
+- `npm run lint` is currently unavailable because the repository has no ESLint configuration.
 - **Diplomacy (negotiation) phase** is not modelled - the rules mark it as table talk, only the result matters.
 - **Policy phase** is inactive in this ruleset and is not implemented.
 - **Caravan vs. hostile caravan** (both eliminated, +1 eco to the attacker) is *not* implemented: the rules
@@ -120,23 +125,33 @@ the right, the *Game master tools* drawer is at the bottom.
 
 1. **Start / continue**: open the *Game master tools* → *Files* → *Load save file* (a `mare-nostrum-save`
    JSON) or start a new game.
-2. **Step 1 - Move**: pick a power in the *Select Power* list, click one of its units (or its row in
-   the order list), choose the order type (move / support / hold / transport / trade) and click the
-   target province on the map. Repeat for every power, then press *Adjudicate All Orders*.
+2. **Step 1 - Move**: paste a form response into *Paste order text*. Case and repeated spaces are
+   ignored; use one order per line or separate orders with commas/semicolons. Choose a default power
+   in *Select Power*, or label lines with a power heading such as `Athens:`. The supported forms
+   include `A Athens -> Corinth`, `F Rhodes hold`, `A Corinth support A Athens`,
+   `A Delphi support A Athens to Thessaly`, `F Aegean Sea convoy A Athens to Rhodes`, and
+   `C Piraeus trade Corinth`. Inspect every parsed line and error, select *Review*, then explicitly
+   *Apply reviewed orders*; any parse/legality error blocks the import. Alternatively expand
+   *Enter or edit orders using the map* to keep using the clickable/unit-by-unit editor. Orders for
+   units omitted from a paste are left unchanged. Then press *Adjudicate All Orders*.
    *Adjudicate All Orders* can be pressed again at any time - the adjudication is repeated from the
    snapshot of the start of the turn, so it is safe to change an order and adjudicate again.
-3. **Step 2 - Retreats**: every dislodged unit gets a dropdown with the legal retreat provinces
+3. **Step 2 - Retreats**: every dislodged unit gets buttons for the legal retreat provinces
    (adjacent, unoccupied, not the province the attacker came from). Units without a retreat are
-   eliminated. *Continue to Build Phase* confirms the retreats and collects the income.
+   eliminated. *Resolve retreats & collect eco* confirms the choices and automatically collects
+   trade income for every power exactly once before the Build Phase. The receipt is shown in the
+   adjudication results panel.
 4. **Step 3 - Build / Disband**: spend the eco points (army 6, fleet 6, caravan 4, elite upgrade 8,
    fortify 3). Free military-unit slots come from controlled supply centres and occupied cities;
    additional units may be paid for with eco. Cities sustain a unit but are never build locations.
    Disband if military units exceed supply-centre + city capacity plus eco-paid units (*Finish Turn*
    stays disabled).
-5. **Step 4 - Score research**: enter the research score (0-100) and the topic (economic / military /
-   diplomatic) per power and press *apply*. 90+ → +3, 75-89 → +2, 50-74 → +1, below 50 → +0 points
-   in the matching ledger; economic research becomes eco points and pays for the builds of the next
-   turn. *Continue to the move phase* starts the next turn.
+5. **Step 4 - Score research**: enter a whole-number research score (0-7) and topic (economic /
+   military / diplomatic) for every power; enter 0 when there was no submission. Review the complete
+   ledger preview and explicitly apply it once. The rescaled reward bands are 0-3 → +0, 4-5 → +1,
+   6 → +2, 7 → +3 to the matching ledger; economic research becomes eco points for the next
+   build phase. The entered 0-7 value is also added to the cumulative research track. *Apply all
+   scores & continue to Move* starts the next turn.
 6. **Game master tools** (drawer):
    - *Ledger*: adjust eco or military/diplomatic points by hand (e.g. for a caravan the GM placed by hand).
    - *Supply centres*: switch on *Place supply centre mode*, pick the owning power, click a province.
@@ -152,14 +167,16 @@ the right, the *Game master tools* drawer is at the bottom.
 {
   "format": "mare-nostrum-save",
   "version": 1,
-  "turn": 1, "year": 350, "phase": "orders",
+  "turn": 1, "year": 350, "phase": "builds",
   "territoryOverrides": { "delphi": { "isSupplyCenter": true, "homePower": "athens" } },
-  "units": [...], "orders": [...], "economy": {...}, "scOwners": {...}, "researchScores": {...}
+  "units": [...], "orders": [...], "economy": {...}, "scOwners": {...},
+  "lastIncome": {...}, "incomeTurn": 1, "researchScores": {...}
 }
 ```
 
 `territoryOverrides` records the supply centres the GM placed so a reload restores them on top of the
-built-in map data.
+built-in map data. `incomeTurn` and `lastIncome` preserve the exactly-once income guard and receipt
+across reloads; the optional `researchScoresTurn` marker prevents a research batch being applied twice.
 
 ## Rules Digest (authoritative source: `mare_nostrum/rules.pdf`)
 
@@ -191,9 +208,11 @@ or if the fleet is ordered to sail away.
   Pending builds are charged in order: free slots are used first, then later builds cost eco.
 
 ### Research and winning
-- Score 90-100 → +3, 75-89 → +2, 50-74 → +1, <50 → +0 to the matching ledger (eco is capped at 15).
-- The research score itself accumulates as a winning track; wealth = cumulative eco; territory = supply centres.
-- The three tracks are combined into the final ranking.
+- The GM input is a small integer from 0 to 7. To preserve the previous reward cutoffs, 0-3 → +0,
+  4-5 → +1, 6 → +2, and 7 → +3 to the matching ledger (eco is capped at 15). This is a UI scale
+  choice, not a new rulebook interpretation; old 0-100 save-file reports remain readable.
+- The entered 0-7 value itself accumulates as the research winning track; wealth = cumulative eco;
+  territory = supply centres. The three tracks are combined into the final ranking.
 
 ### Supply centres
 - Captured at the end of the turn. A supply centre that changes hands **loses its fortification**.
@@ -239,7 +258,7 @@ npm install
 npm run dev          # dev server
 npm run build        # production build -> dist/
 npm run preview      # serve the build
-npm test             # vitest (112 cases)
+npm test             # vitest (137 cases)
 npx tsc --noEmit     # type check
 npm run map:extract  # regenerate territoryPositions.ts from map.svg
 ```

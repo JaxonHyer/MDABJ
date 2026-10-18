@@ -153,8 +153,10 @@ export interface GameState {
   lastIncome?: Record<PowerId, number>;
   /** Which power held a supply centre at the end of the previous turn. */
   scOwners: Record<string, PowerId>;
-  /** Research score of the current turn, per power (0 = not scored yet). */
+  /** Last applied research score, per power (0 is an explicit no-submission score). */
   researchScores: Partial<Record<PowerId, { score: number; topic: ResearchTopic }>>;
+  /** Turn for which the research batch was last applied; prevents duplicate scoring. */
+  researchScoresTurn?: number;
   /** The turn the income was collected for - the income is only counted once. */
   incomeTurn?: number;
   /** Free form notes the game master keeps with the save file. */

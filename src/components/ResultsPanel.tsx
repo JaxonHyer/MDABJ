@@ -6,6 +6,8 @@ interface ResultsPanelProps {
 
 export function ResultsPanel({ gameState }: ResultsPanelProps) {
   const income = gameState.lastIncome;
+  const incomeCollectedThisTurn = gameState.incomeTurn === gameState.turn;
+  const previousIncomeTurn = gameState.incomeTurn ?? (gameState.turn > 1 ? gameState.turn - 1 : undefined);
 
   return (
     <div className="results-panel">
@@ -27,13 +29,25 @@ export function ResultsPanel({ gameState }: ResultsPanelProps) {
         </div>
       )}
 
-      {income && Object.keys(income).length > 0 && (
+      {income && (
         <div className="income-list">
-          <h4>Economic income</h4>
+          <h4>
+            {incomeCollectedThisTurn
+              ? `Trade income collected automatically (turn ${gameState.turn})`
+              : previousIncomeTurn
+                ? `Last trade income (turn ${previousIncomeTurn})`
+                : 'Last recorded trade income'}
+          </h4>
+          <p className="hint">
+            {incomeCollectedThisTurn
+              ? 'Collected for every power after retreats and before builds. This turn is paid only once.'
+              : 'This is the previous receipt; current-turn income is collected automatically after retreats.'}
+            {' '}Income is gross; eco balances still observe the 15-point bank cap.
+          </p>
           {Object.entries(income).map(([power, value]) => (
             <div key={power} className="income-row">
-              <span>{power}</span>
-              <span>+{value}</span>
+              <span>{power.charAt(0).toUpperCase() + power.slice(1)}</span>
+              <span>+{value} eco</span>
             </div>
           ))}
         </div>

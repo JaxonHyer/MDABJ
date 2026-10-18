@@ -12,6 +12,7 @@ import {
   setSupplyCenter,
 } from './engine/gameState';
 import { adjudicate } from './engine/adjudicator';
+import { getAdjudicationState } from './engine/turnSnapshot';
 import { loadPowers, loadTerritories } from './data/gameData';
 import { supportableUnit, upsertOrder, validOrderTargets } from './engine/orders';
 import { MapDisplay } from './components/MapDisplay';
@@ -21,7 +22,11 @@ import { PowerSelector } from './components/PowerSelector';
 import { RetreatPanel } from './components/RetreatPanel';
 import { BuildPanel } from './components/BuildPanel';
 import { AdminPanel } from './components/AdminPanel';
-import { ResearchPanel } from './components/ResearchPanel';
+import {
+  createEmptyResearchDrafts,
+  ResearchDrafts,
+  ResearchPanel,
+} from './components/ResearchPanel';
 import { downloadFile, saveFileName, stateFromJson, stateToJson } from './io/save';
 import { buildTurnReport, turnReportFileName } from './io/turnReport';
 import {
@@ -78,10 +83,13 @@ function App() {
     return state;
   });
   const [selectedPower, setSelectedPower] = useState<PowerId | null>(null);
+  const [orderText, setOrderText] = useState('');
+  const [orderPanelKey, setOrderPanelKey] = useState(0);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [orderType, setOrderType] = useState<OrderType>('move');
   const [hoveredTerritoryId, setHoveredTerritoryId] = useState<string | null>(null);
   const [retreats, setRetreats] = useState<Record<string, string | null>>({});
+  const [researchDrafts, setResearchDrafts] = useState<ResearchDrafts>(createEmptyResearchDrafts);
   const [activeStep, setActiveStep] = useState<StepId>('move');
   const [supplyCentreMode, setSupplyCentreMode] = useState(false);
   const [supplyCentrePower, setSupplyCentrePower] = useState<PowerId>('athens');
@@ -103,21 +111,29 @@ function App() {
    */
   const turnStartRef = useRef<GameState | null>(null);
 
-  // The turn snapshot is taken whenever the game is in the move step.
+  // The turn snapshot is taken during Move and retained for safe
+  // re-adjudication. Never carry it across turns or save loads.
   useEffect(() => {
-    if (gameState.phase === 'orders') turnStartRef.current = gameState;
+    if (gameState.phase === 'orders') {
+      turnStartRef.current = gameState;
+    } else if (turnStartRef.current?.turn !== gameState.turn) {
+      turnStartRef.current = null;
+    }
   }, [gameState]);
 
+  const adjudicationState = getAdjudicationState(gameState, turnStartRef.current);
+  const orderEntryState = adjudicationState ?? gameState;
+
   const selectedUnit: Unit | undefined = useMemo(
-    () => gameState.units.find((u) => u.id === selectedUnitId),
-    [gameState.units, selectedUnitId]
+    () => orderEntryState.units.find((u) => u.id === selectedUnitId),
+    [orderEntryState.units, selectedUnitId]
   );
 
   const validTargets = useMemo(() => {
     if (!selectedUnit) return [];
-    const order = gameState.orders.find((o) => o.unitId === selectedUnit.id);
-    return validOrderTargets(gameState, selectedUnit, order?.type ?? orderType);
-  }, [gameState, selectedUnit, orderType]);
+    const order = orderEntryState.orders.find((o) => o.unitId === selectedUnit.id);
+    return validOrderTargets(orderEntryState, selectedUnit, order?.type ?? orderType);
+  }, [orderEntryState, selectedUnit, orderType]);
 
   const handlePowerSelect = (powerId: PowerId) => {
     setSelectedPower(powerId);
@@ -147,10 +163,11 @@ function App() {
       }
 
       setGameState((prev) => {
-        if (prev.phase !== 'orders') return prev;
         if (!selectedUnitId) return prev;
+        const orderState = getAdjudicationState(prev, turnStartRef.current);
+        if (!orderState) return prev;
 
-        const unit = prev.units.find((u) => u.id === selectedUnitId);
+        const unit = orderState.units.find((u) => u.id === selectedUnitId);
         if (!unit) return prev;
 
         const existing = prev.orders.find((o) => o.unitId === unit.id);
@@ -158,7 +175,7 @@ function App() {
 
         // Support orders point at another unit of the same power.
         if (type === 'support_hold' || type === 'support_move' || type === 'transport') {
-          const supported = supportableUnit(prev, unit, territoryId, type);
+          const supported = supportableUnit(orderState, unit, territoryId, type);
           if (!supported) return prev;
           const next: Order = {
             unitId: unit.id,
@@ -187,16 +204,30 @@ function App() {
   );
 
   const handleContinueToMove = () => {
-    setGameState((prev) => (prev.phase === 'research' ? { ...prev, phase: 'orders' } : prev));
+    setGameState((prev) => {
+      if (prev.phase !== 'research') return prev;
+      const next = { ...prev, phase: 'orders' as const };
+      turnStartRef.current = next;
+      return next;
+    });
+    setResearchDrafts(createEmptyResearchDrafts());
     setSelectedUnitId(null);
     setActiveStep('move');
   };
 
   const handleAdjudicate = () => {
-    // Always adjudicate from the beginning of the turn so that the game
-    // master can change an order and adjudicate again.
-    const base = turnStartRef.current ?? gameState;
-    const outcome = adjudicate({ ...base, orders: gameState.orders });
+    // Re-adjudicate from the beginning of this turn, never from the already
+    // moved board or a stale snapshot from a previous turn.
+    const base = getAdjudicationState(gameState, turnStartRef.current);
+    if (!base) {
+      setNotice(
+        gameState.phase === 'research'
+          ? 'Score research and continue to Move before adjudicating this turn.'
+          : 'A turn-start snapshot is unavailable for this save, so it cannot be safely re-adjudicated.'
+      );
+      return;
+    }
+    const outcome = adjudicate(base);
     setGameState((prev) => ({
       ...prev,
       units: outcome.units,
@@ -214,8 +245,12 @@ function App() {
   };
 
   const handleResolveRetreats = () => {
-    if (gameState.phase === 'orders' || gameState.phase === 'adjudication') {
-      setNotice('Adjudicate the orders before the units can retreat.');
+    if (gameState.phase !== 'retreats') {
+      setNotice(
+        gameState.phase === 'orders' || gameState.phase === 'adjudication'
+          ? 'Adjudicate the orders before the units can retreat.'
+          : 'Retreats have already been resolved or are not ready yet.'
+      );
       return;
     }
     setGameState((prev) => {
@@ -228,26 +263,35 @@ function App() {
   };
 
   const handleBuildsChange = (builds: GameState['builds']) => {
-    setGameState((prev) => ({ ...prev, builds }));
+    setGameState((prev) => (prev.phase === 'builds' ? { ...prev, builds } : prev));
   };
 
   const handleFinishTurn = () => {
-    if (gameState.phase === 'orders' || gameState.phase === 'adjudication') {
-      setNotice('Adjudicate the orders before the turn can end.');
+    if (gameState.phase !== 'builds') {
+      setNotice(
+        gameState.phase === 'orders' || gameState.phase === 'adjudication'
+          ? 'Adjudicate the orders before the turn can end.'
+          : gameState.phase === 'retreats'
+            ? 'Resolve retreats and collect eco before finishing the turn.'
+            : 'This turn has already ended. Score research before returning to Move.'
+      );
       return;
     }
+    if (gameState.units.some((unit) => unit.mustRetreat && !unit.destroyed)) {
+      setNotice('Resolve every retreat before finishing the turn.');
+      return;
+    }
+    turnStartRef.current = null;
     setGameState((prev) => {
-      // Pending retreats are applied here as well, in case the game master
-      // went straight to the build step without resolving them.
-      const withRetreats = removeDestroyed(applyRetreats(prev, retreats));
-      // The income is collected here as well in case the game master went
-      // straight to the build step - it is only ever counted once.
-      const withIncome = collectIncome(withRetreats);
+      // The income receipt is collected after retreats; this is an exactly-once
+      // fallback for older or manually loaded build-phase saves.
+      const withIncome = collectIncome(prev);
       const built = applyBuilds(withIncome);
       const next = advanceTurn(built);
       return refreshSupplyCenters(next);
     });
     setRetreats({});
+    setResearchDrafts(createEmptyResearchDrafts());
     setSelectedUnitId(null);
     setActiveStep('research');
   };
@@ -256,9 +300,15 @@ function App() {
     try {
       const text = await file.text();
       const state = stateFromJson(text);
+      turnStartRef.current = state.phase === 'orders' ? state : null;
       setGameState(state);
+      setActiveStep(PHASE_STEP[state.phase]);
+      setOrderPanelKey((key) => key + 1);
+      setOrderText('');
+      setSelectedPower(state.activePower);
       setSelectedUnitId(null);
       setRetreats({});
+      setResearchDrafts(createEmptyResearchDrafts());
       setNotice(`Loaded ${file.name} - turn ${state.turn} (${state.year} BC).`);
     } catch (error) {
       setNotice(`Could not load the file: ${(error as Error).message}`);
@@ -380,7 +430,11 @@ function App() {
                   onSelect={handlePowerSelect}
                 />
                 <OrderPanel
-                  gameState={gameState}
+                  key={orderPanelKey}
+                  gameState={orderEntryState}
+                  canEditOrders={adjudicationState !== null}
+                  orderText={orderText}
+                  onOrderTextChange={setOrderText}
                   selectedUnitId={selectedUnitId}
                   orderType={orderType}
                   onSelectUnit={setSelectedUnitId}
@@ -408,6 +462,8 @@ function App() {
             {activeStep === 'research' && (
               <ResearchPanel
                 gameState={gameState}
+                drafts={researchDrafts}
+                onDraftsChange={setResearchDrafts}
                 onChange={setGameState}
                 onContinue={handleContinueToMove}
               />
@@ -436,7 +492,7 @@ function App() {
 
         <main className="main-content">
           <MapDisplay
-            gameState={gameState}
+            gameState={activeStep === 'move' && adjudicationState ? orderEntryState : gameState}
             selectedTerritoryId={selectedUnit?.territoryId ?? null}
             hoveredTerritoryId={hoveredTerritoryId}
             validTargets={validTargets}
