@@ -101,8 +101,8 @@ scripts/
     `src/data/territoryFillPaths.ts` contains the map-aligned province geometry.
 13. **Exports**: Save (JSON), Board (SVG + PNG), Stats sheet (SVG + PNG, with a *Cities* column),
     Turn report (txt, with a *CITIES* section).
-14. **Tests**: 137 vitest cases across adjudication, order text parsing, turn snapshots, game state, research,
-    save/load, turn report, DATC-style edge cases, map data and occupied-province fills. `npm run build`
+14. **Tests**: 139 vitest cases across adjudication, order text parsing, turn snapshots, game state,
+    research, save/load, turn report, DATC-style edge cases, map data and occupied-province fills. `npm run build`
     succeeds and includes the TypeScript check.
 
 ### ⚠️ Known Gaps
@@ -258,7 +258,7 @@ npm install
 npm run dev          # dev server
 npm run build        # production build -> dist/
 npm run preview      # serve the build
-npm test             # vitest (137 cases)
+npm test             # vitest (139 cases)
 npx tsc --noEmit     # type check
 npm run map:extract  # regenerate territoryPositions.ts from map.svg
 ```

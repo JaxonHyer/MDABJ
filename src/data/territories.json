@@ -296,7 +296,7 @@
       "isSupplyCenter": true,
       "homePower": "carthage",
       "isTradeNode": false,
-      "adjacent": ["thopsis", "cirta", "gulf_of_tacape", "mare_carthago"]
+      "adjacent": ["thopsis", "cirta", "gulf_of_tacape", "mare_carthago", "mare_herakleia"]
     },
     "rome": {
       "id": "rome",
@@ -853,7 +853,7 @@
       "isSupplyCenter": false,
       "homePower": null,
       "isTradeNode": false,
-      "adjacent": ["saguntum", "baleares", "mauretania", "mare_iberia", "berber_sea"]
+      "adjacent": ["saguntum", "baleares", "mauretania", "maraka", "mare_iberia", "berber_sea"]
     },
     "mare_carthago": {
       "id": "mare_carthago",

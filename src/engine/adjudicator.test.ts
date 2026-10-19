@@ -38,6 +38,17 @@ describe('adjudicator - movement', () => {
     expect(outcome.units[0].territoryId).toBe('aegean_sea');
   });
 
+  it('lets the fleet in Maraka move to Mare Herakleia', () => {
+    const fleet = unit('carthage', 'fleet', 'maraka');
+    const state = makeState([fleet], [order(fleet.id, 'move', 'mare_herakleia')]);
+    const outcome = adjudicate(state);
+
+    expect(outcome.units.find((candidate) => candidate.id === fleet.id)?.territoryId).toBe(
+      'mare_herakleia'
+    );
+    expect(outcome.results.find((result) => result.orderId === fleet.id)?.success).toBe(true);
+  });
+
   it('bounces when the attacker and the defender have the same force', () => {
     const attacker = unit('athens', 'army', 'athens');
     const defender = unit('sparta', 'army', 'corinth');

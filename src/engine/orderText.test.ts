@@ -40,6 +40,20 @@ describe('parseOrderText', () => {
     ]);
   });
 
+  it('accepts a fleet move from Maraka to Mare Herakleia in pasted text', () => {
+    const fleet = unit('carthage', 'fleet', 'maraka');
+    const parsed = parseOrderText(
+      'F Maraka move Mare Herakleia',
+      makeState([fleet]),
+      'carthage',
+    );
+
+    expect(parsed.errorCount).toBe(0);
+    expect(parsed.updates).toEqual([
+      { unitId: fleet.id, type: 'move', target: 'mare_herakleia' },
+    ]);
+  });
+
   it('accepts power headings and prefixes when no default power is selected', () => {
     const athensArmy = unit('athens', 'army', 'athens');
     const romeArmy = unit('rome', 'army', 'rome');
